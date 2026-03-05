@@ -1,0 +1,83 @@
+1 Conversion Rate
+
+Conversion Rate =
+(Closed Won Deals / Total Closed Deals) × 100
+
+
+SELECT
+ROUND(
+(
+COUNT(*) FILTER (WHERE stage = 'CLOSED_WON') * 100.0 /
+NULLIF(
+COUNT(*) FILTER (
+WHERE stage IN (
+'CLOSED_WON',
+'CLOSED_LOST',
+'CLOSED_LOST_TO_COMPETITION'
+)
+),0
+)
+)::numeric,
+2
+) AS conversion_rate
+FROM "Deal";
+
+
+//////////////////////////////////
+
+2 Revenue Won
+
+
+Revenue Won = SUM(amount WHERE stage = CLOSED_WON)
+
+
+SELECT
+SUM(amount) AS revenue_won
+FROM "Deal"
+WHERE stage = 'CLOSED_WON';
+
+/////////////////////////////////////
+
+3 Win / Loss Ratio
+
+
+Win / Loss Ratio =
+Closed Won Deals : Closed Lost Deals
+
+
+SELECT
+COUNT(*) FILTER (WHERE stage = 'CLOSED_WON') AS won_deals,
+COUNT(*) FILTER (
+WHERE stage IN ('CLOSED_LOST','CLOSED_LOST_TO_COMPETITION')
+) AS lost_deals
+FROM "Deal";
+
+//////////////////////////////////////////
+
+4 Revenue Realization Rate
+
+Revenue Realization Rate =
+Revenue Won / (Revenue Won + Revenue Lost) × 100
+
+
+SELECT
+ROUND(
+(
+SUM(CASE WHEN stage = 'CLOSED_WON' THEN amount ELSE 0 END) * 100.0 /
+NULLIF(
+SUM(
+CASE
+WHEN stage IN (
+'CLOSED_WON',
+'CLOSED_LOST',
+'CLOSED_LOST_TO_COMPETITION'
+)
+THEN amount ELSE 0
+END
+),0
+)
+)::numeric,
+2
+) AS revenue_realization_rate
+FROM "Deal";
+

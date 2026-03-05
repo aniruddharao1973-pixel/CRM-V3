@@ -1,0 +1,489 @@
+// import { Routes, Route, Navigate } from "react-router-dom";
+// import { Suspense, lazy } from "react";
+// import Layout from "./components/Layout";
+// import ProtectedRoute from "./components/ProtectedRoute";
+// import Spinner from "./components/Spinner";
+
+// // Auth - load immediately
+// import Login from "./features/auth/Login";
+// import Register from "./features/auth/Register";
+
+// // Lazy load other pages
+// const Dashboard = lazy(() => import("./features/dashboard/Dashboard"));
+// const AccountList = lazy(() => import("./features/accounts/AccountList"));
+// const AccountForm = lazy(() => import("./features/accounts/AccountForm"));
+// const AccountDetail = lazy(() => import("./features/accounts/AccountDetail"));
+// const ContactList = lazy(() => import("./features/contacts/ContactList"));
+// const ContactForm = lazy(() => import("./features/contacts/ContactForm"));
+// const ContactDetail = lazy(() => import("./features/contacts/ContactDetail"));
+// const DealList = lazy(() => import("./features/deals/DealList"));
+// const DealForm = lazy(() => import("./features/deals/DealForm"));
+// const DealDetail = lazy(() => import("./features/deals/DealDetail"));
+// const DealPipeline = lazy(() => import("./features/deals/DealPipeline"));
+// const TaskList = lazy(() => import("./features/tasks/TaskList"));
+// const TaskForm = lazy(() => import("./features/tasks/TaskForm"));
+// // Loading fallback
+// const PageLoader = () => (
+//   <div className="flex items-center justify-center py-20">
+//     <Spinner size="lg" />
+//   </div>
+// );
+
+// function App() {
+//   return (
+//     <Routes>
+//       {/* Public */}
+//       <Route path="/login" element={<Login />} />
+//       <Route path="/register" element={<Register />} />
+
+//       {/* Protected */}
+//       <Route
+//         path="/"
+//         element={
+//           <ProtectedRoute>
+//             <Layout />
+//           </ProtectedRoute>
+//         }
+//       >
+//         <Route
+//           index
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <Dashboard />
+//             </Suspense>
+//           }
+//         />
+
+//         {/* Accounts */}
+//         <Route
+//           path="accounts"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <AccountList />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="accounts/new"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <AccountForm />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="accounts/:id"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <AccountDetail />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="accounts/:id/edit"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <AccountForm />
+//             </Suspense>
+//           }
+//         />
+
+//         {/* Contacts */}
+//         <Route
+//           path="contacts"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <ContactList />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="contacts/new"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <ContactForm />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="contacts/:id"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <ContactDetail />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="contacts/:id/edit"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <ContactForm />
+//             </Suspense>
+//           }
+//         />
+
+//         {/* Deals */}
+//         <Route
+//           path="deals"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <DealList />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="deals/pipeline"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <DealPipeline />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="deals/new"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <DealForm />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="deals/:id"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <DealDetail />
+//             </Suspense>
+//           }
+//         />
+//         <Route
+//           path="deals/:id/edit"
+//           element={
+//             <Suspense fallback={<PageLoader />}>
+//               <DealForm />
+//             </Suspense>
+//           }
+//         />
+//           {/* Tasks */}
+//           {/* Tasks */}
+// <Route
+//   path="tasks"
+//   element={
+//     <Suspense fallback={<PageLoader />}>
+//       <TaskList />
+//     </Suspense>
+//   }
+// />
+
+// <Route
+//   path="tasks/new"
+//   element={
+//     <Suspense fallback={<PageLoader />}>
+//       <TaskForm />
+//     </Suspense>
+//   }
+// />
+
+// <Route
+//   path="tasks/:id/edit"
+//   element={
+//     <Suspense fallback={<PageLoader />}>
+//       <TaskForm />
+//     </Suspense>
+//   }
+// />
+
+//         {/* Catch all */}
+//         <Route path="*" element={<Navigate to="/" replace />} />
+//       </Route>
+//     </Routes>
+//   );
+// }
+
+// export default App;
+
+// App.jsx
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { socket } from "./socket";
+import { Toaster } from "react-hot-toast";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Suspense, lazy } from "react";
+import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Spinner from "./components/Spinner";
+
+// Auth
+import Login from "./features/auth/Login";
+import TaskDetail from "./features/tasks/TaskDetail";
+import AdminRoute from "./components/AdminRoute";
+import AdvancedAnalytics from "./features/analytics/pages/AdvancedAnalytics";
+// Lazy pages
+const Dashboard = lazy(() => import("./features/dashboard/Dashboard"));
+const AccountList = lazy(() => import("./features/accounts/AccountList"));
+const AccountForm = lazy(() => import("./features/accounts/AccountForm"));
+const AccountDetail = lazy(() => import("./features/accounts/AccountDetail"));
+const ContactList = lazy(() => import("./features/contacts/ContactList"));
+const ContactForm = lazy(() => import("./features/contacts/ContactForm"));
+const ContactDetail = lazy(() => import("./features/contacts/ContactDetail"));
+const DealList = lazy(() => import("./features/deals/DealList"));
+const DealForm = lazy(() => import("./features/deals/DealForm"));
+const DealDetail = lazy(() => import("./features/deals/DealDetail"));
+const DealPipeline = lazy(() => import("./features/deals/DealPipeline"));
+const TaskList = lazy(() => import("./features/tasks/TaskList"));
+const TaskForm = lazy(() => import("./features/tasks/TaskForm"));
+const Users = lazy(() => import("./features/users/Users"));
+const CreateUser = lazy(() => import("./features/users/CreateUser"));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center py-20">
+    <Spinner size="lg" />
+  </div>
+);
+
+function App() {
+  const { user } = useSelector((state) => state.auth);
+
+  // ✅ JOIN SOCKET ROOM WHEN USER LOGS IN
+  useEffect(() => {
+    if (user?.id) {
+      socket.emit("join", user.id);
+    }
+
+    return () => {
+      socket.off("join");
+    };
+  }, [user]);
+
+  return (
+    <>
+      {/* ✅ GLOBAL TOASTER */}
+      <Toaster position="bottom-right" toastOptions={{ duration: 3000 }} />
+
+      <Routes>
+        {/* Public */}
+        {/* Users – ADMIN ONLY */}
+
+        {/* <Route
+  path="users/:id"
+  element={
+    <AdminRoute>
+      <Suspense fallback={<PageLoader />}>
+        <EditUser />
+      </Suspense>
+    </AdminRoute>
+  }
+/> */}
+        <Route path="/login" element={<Login />} />
+        
+          
+        {/* Protected */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route
+            index
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <Dashboard />
+              </Suspense>
+            }
+          />
+           <Route
+            path="analytics/advanced"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AdvancedAnalytics />
+              </Suspense>
+            }
+          />
+          {/* Accounts */}
+          <Route
+            path="accounts"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AccountList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="accounts/new"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AccountForm />
+              </Suspense>
+            }
+          />
+          <Route
+            path="accounts/:id"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AccountDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="accounts/:id/edit"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AccountForm />
+              </Suspense>
+            }
+          />
+          {/* USERS – ADMIN ONLY – RIGHT SIDE RENDER */}
+    <Route
+      path="users"
+      element={
+        <AdminRoute>
+          <Suspense fallback={<PageLoader />}>
+            <Users />
+          </Suspense>
+        </AdminRoute>
+      }
+    />
+
+    <Route
+      path="users/create"
+      element={
+        <AdminRoute>
+          <Suspense fallback={<PageLoader />}>
+            <CreateUser />
+          </Suspense>
+        </AdminRoute>
+      }
+    />
+
+    <Route
+      path="users/:id/edit"
+      element={
+        <AdminRoute>
+          <Suspense fallback={<PageLoader />}>
+            <CreateUser />
+          </Suspense>
+        </AdminRoute>
+      }
+    />
+
+          {/* Contacts */}
+          <Route
+            path="contacts"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ContactList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="contacts/new"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ContactForm />
+              </Suspense>
+            }
+          />
+          <Route
+            path="contacts/:id"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ContactDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="contacts/:id/edit"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ContactForm />
+              </Suspense>
+            }
+          />
+
+          {/* Deals */}
+          <Route
+            path="deals"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <DealList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="deals/pipeline"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <DealPipeline />
+              </Suspense>
+            }
+          />
+          <Route
+            path="deals/new"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <DealForm />
+              </Suspense>
+            }
+          />
+          <Route
+            path="deals/:id"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <DealDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="deals/:id/edit"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <DealForm />
+              </Suspense>
+            }
+          />
+
+          {/* Tasks */}
+          <Route
+            path="tasks"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <TaskList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="tasks/new"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <TaskForm />
+              </Suspense>
+            }
+          />
+          <Route
+            path="tasks/:id/edit"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <TaskForm />
+              </Suspense>
+            }
+          />
+          <Route
+            path="tasks/:id"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <TaskDetail />
+              </Suspense>
+            }
+          />
+
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </>
+  );
+}
+
+export default App;
