@@ -272,15 +272,15 @@ export const fetchKpiMetrics = createAsyncThunk(
   },
 );
 
-export const fetchDealPriority = createAsyncThunk(
-  "analytics/dealPriority",
+export const fetchDealMomentum = createAsyncThunk(
+  "analytics/dealMomentum",
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await API.get("/analytics/deal-priority");
+      const { data } = await API.get("/analytics/deal-momentum");
       return data.data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Failed to fetch deal priority",
+        err.response?.data?.message || "Failed to fetch deal momentum",
       );
     }
   },
@@ -300,8 +300,8 @@ const analyticsSlice = createSlice({
     dealsByIndustry: [],
     recentActivities: null,
 
-    dealPriority: [],
-    dealPriorityLoading: false,
+    dealMomentum: [],
+    dealMomentumLoading: false,
 
     /* NEW */
     kpis: {
@@ -372,19 +372,20 @@ const analyticsSlice = createSlice({
       .addCase(fetchKpiMetrics.fulfilled, (state, action) => {
         state.kpis = action.payload;
       })
-      /* ---------------- Deal Priority Engine ---------------- */
 
-      .addCase(fetchDealPriority.pending, (state) => {
-        state.dealPriorityLoading = true;
+      /* ---------------- Deal Momentum Engine ---------------- */
+
+      .addCase(fetchDealMomentum.pending, (state) => {
+        state.dealMomentumLoading = true;
       })
 
-      .addCase(fetchDealPriority.fulfilled, (state, action) => {
-        state.dealPriorityLoading = false;
-        state.dealPriority = action.payload;
+      .addCase(fetchDealMomentum.fulfilled, (state, action) => {
+        state.dealMomentumLoading = false;
+        state.dealMomentum = action.payload;
       })
 
-      .addCase(fetchDealPriority.rejected, (state, action) => {
-        state.dealPriorityLoading = false;
+      .addCase(fetchDealMomentum.rejected, (state, action) => {
+        state.dealMomentumLoading = false;
         state.error = action.payload;
       });
   },

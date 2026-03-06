@@ -21,8 +21,8 @@
 // router.get("/deals-by-source", getDealsBySource);
 // router.get("/recent-activities", getRecentActivities);
 // // router.get("/deals-by-industry", getDealsByIndustry);
-
 // export default router;
+
 // routes/analytics.routes.js
 import { Router } from "express";
 import {
@@ -40,7 +40,7 @@ import {
   getRiskDeals,
   getStageDeals,
   getKpiMetrics,
-  getDealPriorityAnalytics,
+  getDealMomentumAnalytics,
 } from "../controllers/analytics.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 
@@ -62,5 +62,5 @@ router.get("/stage-aging", getStageAgingAnalytics);
 router.get("/risk-deals", getRiskDeals);
 router.get("/stage-deals", getStageDeals);
 router.get("/kpi-metrics", getKpiMetrics);
-router.get("/deal-priority", getDealPriorityAnalytics);
+router.get("/deal-momentum", getDealMomentumAnalytics);
 export default router;

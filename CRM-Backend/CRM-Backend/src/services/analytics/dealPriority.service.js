@@ -1,7 +1,9 @@
+// CRM-Backend/src/services/analytics/dealPriority.service.js
+
 import prisma from "../../utils/prisma.js";
 
 /*
-Priority Score Factors
+Deal Momentum Factors
 
 1️⃣ Deal Value (0–30)
 2️⃣ Stage Importance (0–20)
@@ -9,7 +11,7 @@ Priority Score Factors
 4️⃣ Closing Date Urgency (0–20)
 5️⃣ Risk Level Adjustment (-10 → +10)
 
-Final Score Range ≈ 0–100
+Final Momentum Score ≈ 0–100
 */
 
 export async function getDealPriority(userId) {
@@ -103,14 +105,21 @@ export async function getDealPriority(userId) {
       riskAdjustment = riskMap[deal.risk.riskLevel] || 0;
     }
 
-    /* ---------------- FINAL SCORE ---------------- */
+    /* ---------------- FINAL MOMENTUM SCORE ---------------- */
 
-    const priorityScore =
+    const momentumScore =
       valueScore + stageScore + agingScore + closingScore + riskAdjustment;
+
+    /* ---------------- MOMENTUM LEVEL ---------------- */
+
+    let momentumLevel = "LOW";
+
+    if (momentumScore >= 60) momentumLevel = "HIGH";
+    else if (momentumScore >= 35) momentumLevel = "MEDIUM";
 
     /* ---------------- REASON ---------------- */
 
-    let reason = "Active opportunity";
+    let reason = "Deal gaining momentum";
 
     if (closingScore >= 15) reason = "Closing date approaching";
 
@@ -129,12 +138,14 @@ export async function getDealPriority(userId) {
       amount: deal.amount,
       closingDate: deal.closingDate,
       riskLevel: deal.risk?.riskLevel || "UNKNOWN",
-      priorityScore: Math.round(priorityScore),
+
+      momentumScore: Math.round(momentumScore),
+      momentumLevel,
       reason,
     };
   });
 
-  /* ---------------- SORT BY PRIORITY ---------------- */
+  /* ---------------- SORT BY MOMENTUM ---------------- */
 
-  return scoredDeals.sort((a, b) => b.priorityScore - a.priorityScore);
+  return scoredDeals.sort((a, b) => b.momentumScore - a.momentumScore);
 }

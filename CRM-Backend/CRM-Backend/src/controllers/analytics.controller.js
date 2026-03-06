@@ -2026,12 +2026,13 @@ export const getKpiMetrics = asyncHandler(async (req, res) => {
     },
   });
 });
+
 /* ============================================================
-   DEAL PRIORITY ENGINE
-   @route GET /api/analytics/deal-priority
+   DEAL MOMENTUM ENGINE
+   @route GET /api/analytics/deal-momentum
 ============================================================ */
 
-export const getDealPriorityAnalytics = asyncHandler(async (req, res) => {
+export const getDealMomentumAnalytics = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
 
   const deals = await getDealPriority(userId);

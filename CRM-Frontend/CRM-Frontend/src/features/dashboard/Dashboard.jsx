@@ -373,7 +373,7 @@ import {
   fetchMonthlyTrend,
   fetchTopPerformers,
   fetchDealsBySource,
-  fetchDealPriority,
+  fetchDealMomentum,
 } from "../analytics/analyticsSlice";
 
 import Spinner from "../../components/Spinner";
@@ -405,7 +405,7 @@ const Dashboard = () => {
     monthlyTrend,
     topPerformers,
     dealsBySource,
-    dealPriority,
+    dealMomentum,
     dashboardLoading,
   } = useSelector((s) => s.analytics);
 
@@ -417,7 +417,7 @@ const Dashboard = () => {
       dispatch(fetchMonthlyTrend(6));
       dispatch(fetchTopPerformers(5));
       dispatch(fetchDealsBySource());
-      dispatch(fetchDealPriority());
+      dispatch(fetchDealMomentum());
     }
   }, [dispatch]);
 
@@ -568,7 +568,7 @@ const Dashboard = () => {
               </svg>
             </div>
             <h2 className="text-sm font-semibold text-gray-900 tracking-tight">
-              Today's Priority Deals
+              Deal Momentum
             </h2>
           </div>
           <span className="text-[11px] text-gray-400 font-medium">
@@ -578,7 +578,7 @@ const Dashboard = () => {
 
         {/* List */}
         <div className="divide-y divide-slate-50">
-          {dealPriority?.slice(0, 5).map((deal, idx) => (
+          {dealMomentum?.slice(0, 5).map((deal, idx) => (
             <div
               key={deal.dealId}
               onClick={() => navigate(`/deals/${deal.dealId}`)}
@@ -624,7 +624,7 @@ const Dashboard = () => {
                     idx === 0 ? "text-indigo-600" : "text-slate-400"
                   }`}
                 >
-                  {deal.priorityScore}
+                  {deal.momentumScore}
                 </span>
                 <span className="text-[10px] text-gray-400 leading-none text-right">
                   {deal.reason}
@@ -633,7 +633,7 @@ const Dashboard = () => {
             </div>
           ))}
 
-          {!dealPriority?.length && (
+          {!dealMomentum?.length && (
             <div className="py-10 text-center">
               <p className="text-sm text-slate-400">No priority deals found</p>
             </div>
