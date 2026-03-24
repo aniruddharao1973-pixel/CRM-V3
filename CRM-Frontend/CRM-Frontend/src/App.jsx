@@ -211,12 +211,18 @@ import { Suspense, lazy } from "react";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Spinner from "./components/Spinner";
+import { useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 
 // Auth
 import Login from "./features/auth/Login";
 import TaskDetail from "./features/tasks/TaskDetail";
 import AdminRoute from "./components/AdminRoute";
 import AdvancedAnalytics from "./features/analytics/pages/AdvancedAnalytics";
+import CalendarPage from "./features/calendar/pages/CalendarPage";
+import { useDispatch } from "react-redux";
+import { addNotification } from "./features/notifications/notificationSlice";
+
 // Lazy pages
 const Dashboard = lazy(() => import("./features/dashboard/Dashboard"));
 const AccountList = lazy(() => import("./features/accounts/AccountList"));
@@ -243,17 +249,53 @@ const PageLoader = () => (
 
 function App() {
   const { user } = useSelector((state) => state.auth);
+  const location = useLocation();
+  const dispatch = useDispatch();
 
   // ✅ JOIN SOCKET ROOM WHEN USER LOGS IN
+  // useEffect(() => {
+  //   if (user?.id) {
+  //     socket.emit("join", user.id);
+  //   }
+
+  //   return () => {
+  //     socket.off("join");
+  //   };
+  // }, [user]);
+
   useEffect(() => {
-    if (user?.id) {
-      socket.emit("join", user.id);
-    }
+    if (!user?.id) return;
+
+    // Join room
+    socket.emit("join", user.id);
+
+    // 🔔 Listen for notifications
+    socket.on("notification", (data) => {
+      console.log("🔔 New Notification:", data);
+
+      // Add to Redux
+      dispatch(addNotification(data));
+
+      // Optional: toast popup
+      toast.success(data.title || "New Notification");
+    });
 
     return () => {
-      socket.off("join");
+      socket.off("notification");
     };
-  }, [user]);
+  }, [user, dispatch]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    if (params.get("connected") === "true") {
+      toast.success("Google Calendar connected successfully");
+    }
+
+    if (params.get("connected") === "false") {
+      toast.error("Google Calendar connection failed");
+    }
+  }, [location]);
 
   return (
     <>
@@ -474,6 +516,15 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <TaskDetail />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="/calendar"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <CalendarPage />
               </Suspense>
             }
           />

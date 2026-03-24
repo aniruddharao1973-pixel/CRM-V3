@@ -192,6 +192,147 @@ EMAIL SIZE SAFETY CHECK
   }
 };
 
+// /*
+// =====================================================
+// SEND VIA GMAIL (GOOGLE API OAUTH)
+// =====================================================
+// */
+// export const sendGmail = async ({ userId, to, subject, html, attachments }) => {
+//   console.log("=================================================");
+//   console.log("📨 GMAIL EMAIL SENDING STARTED");
+//   console.log("=================================================");
+
+//   try {
+//     const user = await prisma.user.findUnique({
+//       where: { id: userId },
+//     });
+
+//     if (!user) {
+//       throw new Error("User not found");
+//     }
+
+//     if (!user.emailAccessToken || !user.emailRefreshToken) {
+//       throw new Error("Gmail not connected for this user");
+//     }
+
+//     console.log("📧 Gmail User:", user.email);
+//     console.log("🔑 Access Token Exists:", !!user.emailAccessToken);
+
+//     const oauth2Client = new google.auth.OAuth2(
+//       process.env.GOOGLE_CLIENT_ID,
+//       process.env.GOOGLE_CLIENT_SECRET,
+//       process.env.GOOGLE_REDIRECT_URI,
+//     );
+
+//     oauth2Client.setCredentials({
+//       access_token: user.emailAccessToken,
+//       refresh_token: user.emailRefreshToken,
+//     });
+
+//     /*
+// =====================================================
+// AUTO REFRESH TOKEN
+// =====================================================
+// */
+
+//     oauth2Client.on("tokens", async (tokens) => {
+//       console.log("🔄 Gmail Token Refreshed");
+
+//       await prisma.user.update({
+//         where: { id: userId },
+//         data: {
+//           emailAccessToken: tokens.access_token ?? user.emailAccessToken,
+//           emailRefreshToken: tokens.refresh_token ?? user.emailRefreshToken,
+//           emailTokenExpiry: tokens.expiry_date
+//             ? new Date(tokens.expiry_date)
+//             : user.emailTokenExpiry,
+//         },
+//       });
+//     });
+
+//     const gmail = google.gmail({
+//       version: "v1",
+//       auth: oauth2Client,
+//     });
+
+//     const boundary = "crm_boundary";
+
+//     let messageParts = [
+//       `From: CRM System <${user.email}>`,
+//       `To: ${to}`,
+//       `Subject: ${subject}`,
+//       "MIME-Version: 1.0",
+//       `Content-Type: multipart/related; boundary=${boundary}`,
+//       "",
+//       `--${boundary}`,
+//       "Content-Type: text/html; charset=UTF-8",
+//       "",
+//       html,
+//     ];
+
+//     for (const file of attachments) {
+//       const fs = await import("fs");
+//       const content = fs.readFileSync(file.path).toString("base64");
+
+//       messageParts.push(
+//         `--${boundary}`,
+//         `Content-Type: image/png`,
+//         `Content-Transfer-Encoding: base64`,
+//         `Content-ID: <${file.cid}>`,
+//         `Content-Disposition: inline; filename="${file.filename}"`,
+//         "",
+//         content,
+//       );
+//     }
+
+//     messageParts.push(`--${boundary}--`);
+
+//     const message = messageParts.join("\r\n");
+
+//     const encodedMessage = Buffer.from(message)
+//       .toString("base64")
+//       .replace(/\+/g, "-")
+//       .replace(/\//g, "_")
+//       .replace(/=+$/, "");
+
+//     console.log("📨 Sending Gmail API email...");
+
+//     const res = await gmail.users.messages.send({
+//       userId: "me",
+//       requestBody: {
+//         raw: encodedMessage,
+//       },
+//     });
+
+//     console.log("✅ Gmail Email Sent:", res.data.id);
+
+//     /*
+// =================================================
+// DEBUG GMAIL MESSAGE LOCATION
+// =================================================
+// */
+
+//     console.log("📨 Gmail API FULL RESPONSE:");
+//     console.log(JSON.stringify(res.data, null, 2));
+
+//     const messageDetails = await gmail.users.messages.get({
+//       userId: "me",
+//       id: res.data.id,
+//     });
+
+//     console.log("📧 Gmail Stored Labels:", messageDetails.data.labelIds);
+//     console.log("📧 Gmail Thread ID:", messageDetails.data.threadId);
+
+//     return {
+//       messageId: res.data.id,
+//       threadId: res.data.threadId,
+//     };
+//   } catch (error) {
+//     console.error("❌ Gmail Email Failed:", error.message);
+//     throw error;
+//   }
+// };
+
 /*
 =====================================================
 SEND VIA GMAIL (GOOGLE API OAUTH)
@@ -211,12 +352,24 @@ export const sendGmail = async ({ userId, to, subject, html, attachments }) => {
       throw new Error("User not found");
     }
 
-    if (!user.emailAccessToken || !user.emailRefreshToken) {
-      throw new Error("Gmail not connected for this user");
+    /*
+    =====================================================
+    GET GOOGLE TOKENS FROM CalendarIntegration
+    =====================================================
+    */
+    const integration = await prisma.calendarIntegration.findFirst({
+      where: {
+        userId: user.id,
+        provider: "GOOGLE",
+      },
+    });
+
+    if (!integration || !integration.refreshToken) {
+      throw new Error("Google not connected. Please reconnect.");
     }
 
     console.log("📧 Gmail User:", user.email);
-    console.log("🔑 Access Token Exists:", !!user.emailAccessToken);
+    console.log("🔑 Using CalendarIntegration tokens");
 
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
@@ -225,29 +378,34 @@ export const sendGmail = async ({ userId, to, subject, html, attachments }) => {
     );
 
     oauth2Client.setCredentials({
-      access_token: user.emailAccessToken,
-      refresh_token: user.emailRefreshToken,
+      access_token: integration.accessToken,
+      refresh_token: integration.refreshToken,
     });
 
     /*
-=====================================================
-AUTO REFRESH TOKEN
-=====================================================
-*/
-
+    =====================================================
+    AUTO REFRESH TOKEN
+    =====================================================
+    */
     oauth2Client.on("tokens", async (tokens) => {
-      console.log("🔄 Gmail Token Refreshed");
+      try {
+        console.log("🔄 Gmail Token Refreshed");
 
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          emailAccessToken: tokens.access_token ?? user.emailAccessToken,
-          emailRefreshToken: tokens.refresh_token ?? user.emailRefreshToken,
-          emailTokenExpiry: tokens.expiry_date
-            ? new Date(tokens.expiry_date)
-            : user.emailTokenExpiry,
-        },
-      });
+        await prisma.calendarIntegration.update({
+          where: {
+            id: integration.id,
+          },
+          data: {
+            accessToken: tokens.access_token ?? integration.accessToken,
+            refreshToken: tokens.refresh_token ?? integration.refreshToken,
+            tokenExpiry: tokens.expiry_date
+              ? new Date(tokens.expiry_date)
+              : integration.tokenExpiry,
+          },
+        });
+      } catch (err) {
+        console.error("⚠️ Token refresh failed (non-blocking):", err.message);
+      }
     });
 
     const gmail = google.gmail({
@@ -297,21 +455,27 @@ AUTO REFRESH TOKEN
 
     console.log("📨 Sending Gmail API email...");
 
-    const res = await gmail.users.messages.send({
-      userId: "me",
-      requestBody: {
-        raw: encodedMessage,
-      },
-    });
+    let res;
+
+    try {
+      res = await gmail.users.messages.send({
+        userId: "me",
+        requestBody: {
+          raw: encodedMessage,
+        },
+      });
+    } catch (err) {
+      console.error("❌ Gmail API Error:", err.message);
+      throw err;
+    }
 
     console.log("✅ Gmail Email Sent:", res.data.id);
 
     /*
-=================================================
-DEBUG GMAIL MESSAGE LOCATION
-=================================================
-*/
-
+    =================================================
+    DEBUG GMAIL MESSAGE LOCATION
+    =================================================
+    */
     console.log("📨 Gmail API FULL RESPONSE:");
     console.log(JSON.stringify(res.data, null, 2));
 

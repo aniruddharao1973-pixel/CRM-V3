@@ -135,13 +135,46 @@ export async function getDealPriority(userId) {
       dealName: deal.dealName,
       account: deal.account?.accountName,
       stage: deal.stage,
-      amount: deal.amount,
-      closingDate: deal.closingDate,
-      riskLevel: deal.risk?.riskLevel || "UNKNOWN",
 
       momentumScore: Math.round(momentumScore),
       momentumLevel,
       reason,
+
+      breakdown: {
+        valueScore: Math.round(valueScore),
+        stageScore,
+        agingScore,
+        closingScore,
+        riskAdjustment,
+      },
+
+      // ✅ HUMAN EXPLANATION (IMPORTANT)
+      explanation: {
+        value:
+          valueScore > 0
+            ? `Deal value contributed ${Math.round(valueScore)} points based on amount ₹${deal.amount}`
+            : "No deal value added",
+
+        stage: `Current stage "${deal.stage.replace(
+          /_/g,
+          " ",
+        )}" contributed ${stageScore} points`,
+
+        aging:
+          agingScore > 0
+            ? `Deal has been in this stage for some time, adding ${agingScore} points`
+            : "Recently moved to this stage",
+
+        closing:
+          closingScore > 0
+            ? `Closing date urgency added ${closingScore} points`
+            : "No urgency from closing date",
+
+        risk:
+          riskAdjustment !== 0
+            ? `Risk level adjusted score by ${riskAdjustment} points`
+            : "No risk impact",
+      },
     };
   });
 

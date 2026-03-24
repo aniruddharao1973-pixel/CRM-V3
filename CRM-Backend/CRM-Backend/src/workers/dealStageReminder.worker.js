@@ -4,7 +4,7 @@ import { sendEmail } from "../utils/sendEmail.js"; // your mailer
 
 const DAYS = 7;
 
-cron.schedule("0 * * * *", async () => {
+cron.schedule("*/1 * * * *", async () => {
   console.log("⏳ Running RFQ follow-up check...");
 
   const sevenDaysAgo = new Date();

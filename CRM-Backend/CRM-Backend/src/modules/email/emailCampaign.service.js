@@ -397,6 +397,7 @@
 import prisma from "../../utils/prisma.js";
 import { sendEmailGateway } from "./emailGateway.js";
 import { renderTemplate } from "./templateRenderer.js";
+import { parseTemplate } from "./templateParser.js";
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -450,15 +451,34 @@ export async function sendBulkEmailCampaign({
     await Promise.all(
       batch.map(async (recipient) => {
         try {
+          // 🔥 FETCH FULL CONTACT WITH ACCOUNT
+          const fullContact = await prisma.contact.findUnique({
+            where: { id: recipient.id },
+            include: {
+              account: {
+                select: {
+                  accountName: true,
+                  industry: true,
+                },
+              },
+            },
+          });
+
+          // 🔥 VARIABLES (THIS FIXES EVERYTHING)
           const variables = {
-            contact: recipient,
+            contact: fullContact || recipient,
+            account: fullContact?.account || {},
           };
 
+          // 🔥 TEMPLATE RENDER
           const templateBody = template?.body || "";
           const templateSubject = template?.subject || "";
 
           const finalBody = renderTemplate(body || templateBody, variables);
-          const finalSubject = subject || templateSubject;
+          const finalSubject = parseTemplate(
+            subject || templateSubject,
+            variables,
+          );
 
           /*
           =================================================

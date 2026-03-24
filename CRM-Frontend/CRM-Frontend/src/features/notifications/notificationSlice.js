@@ -1,3 +1,4 @@
+// src\features\notifications\notificationSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../api/axios";
 

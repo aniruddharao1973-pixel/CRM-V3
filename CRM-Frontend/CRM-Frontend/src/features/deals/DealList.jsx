@@ -958,7 +958,7 @@ const DealList = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">
-                {pagination?.total || 0}
+                {pagination?.total || sortedDeals.length}
               </p>
               <p className="text-sm text-gray-500">Total Deals</p>
             </div>

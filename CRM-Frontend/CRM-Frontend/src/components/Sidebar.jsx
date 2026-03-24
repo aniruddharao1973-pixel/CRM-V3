@@ -11,7 +11,6 @@
 //   CheckCircleIcon
 // } from "@heroicons/react/24/outline";
 
-
 // const navigation = [
 //   { name: "Dashboard", to: "/", icon: HomeIcon },
 //   { name: "Accounts", to: "/accounts", icon: BuildingOffice2Icon },
@@ -74,7 +73,6 @@
 // src/components/Sidebar.jsx
 
 // src/components/Sidebar.jsx
-
 import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { NavLink, useLocation } from "react-router-dom";
@@ -88,6 +86,7 @@ import {
   ChevronRight,
   X,
   BarChart3,
+  CalendarDays,
 } from "lucide-react";
 
 function MenuItem({ item, onNavigate, isMobile = false, collapsed, isActive }) {
@@ -187,9 +186,7 @@ function SidebarContent({
   return (
     <>
       <div
-        className={`flex items-center ${
-          isMobile ? "justify-between" : ""
-        } p-2`}
+        className={`flex items-center ${isMobile ? "justify-between" : ""} p-2`}
       >
         <BrandSection isCollapsed={isCollapsed} />
         {isMobile && (
@@ -254,20 +251,25 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
     { name: "Contacts", to: "/contacts", icon: Users },
     { name: "Deals", to: "/deals", icon: IndianRupee },
     { name: "Tasks", to: "/tasks", icon: CheckSquare },
+
+    // ✅ ADD THIS
+    { name: "Calendar", to: "/calendar", icon: CalendarDays },
+
     ...(user?.role === "ADMIN"
       ? [{ name: "Users", to: "/users", icon: Users }]
       : []),
-       {
-    name: "Advanced Analytics",
-    to: "/analytics/advanced",
-    icon: BarChart3,
-    badge: "NEW",
-  },
+
+    {
+      name: "Advanced Analytics",
+      to: "/analytics/advanced",
+      icon: BarChart3,
+      badge: "NEW",
+    },
   ];
 
   const isActive = useCallback(
     (path) => location.pathname === path,
-    [location.pathname]
+    [location.pathname],
   );
 
   useEffect(() => {

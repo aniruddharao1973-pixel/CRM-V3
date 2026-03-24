@@ -10,8 +10,9 @@
 
 // export default router;
 //======================================================================//  
-// src/routes/ai.routes.js
 
+
+// src/routes/ai.routes.js
 import express from "express";
 import { askAI, askAnalyticsAI } from "../controllers/ai.controller.js";
 

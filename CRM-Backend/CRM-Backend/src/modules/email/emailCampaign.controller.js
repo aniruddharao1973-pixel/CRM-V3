@@ -41,9 +41,11 @@ export async function sendCampaign(req, res) {
       finalRecipients = contacts
         .filter((c) => c.email)
         .map((c) => ({
+          id: c.id, // ✅ IMPORTANT
           email: c.email,
+          firstName: c.firstName,
+          lastName: c.lastName,
           name: `${c.firstName || ""} ${c.lastName || ""}`.trim(),
-          contactId: c.id,
         }));
     }
 

@@ -53,9 +53,14 @@ model User {
   reminders       Reminder[]
   notifications   Notification[]
 
+  // Calendar
+calendarIntegration CalendarIntegration[]
+organizedMeetings   Meeting[]
+
   dealStageHistories DealStageHistory[] @relation("StageChangedBy")
 
   sentEmails            EmailLog[]
+  whatsAppMessages      WhatsAppMessage[]
   createdEmailTemplates EmailTemplate[]
 
   // NEW
@@ -115,6 +120,8 @@ model Account {
   deals    Deal[]
   tasks    Task[]
   emails   EmailLog[]
+  whatsAppMessages WhatsAppMessage[]
+  meetings Meeting[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -179,6 +186,9 @@ model Contact {
   deals  Deal[]
   tasks  Task[]
   emails EmailLog[]
+  whatsAppMessages WhatsAppMessage[]
+  meetings Meeting[]
+  meetingAttendees MeetingAttendee[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -201,6 +211,10 @@ model Deal {
   probability     Int?
 
   stage DealStage
+
+  stageUpdatedAt DateTime @default(now())
+
+  rfqAlertSentAt DateTime? 
 
   // ⭐ NEW FIELDS
   personInCharge String?
@@ -232,6 +246,8 @@ model Deal {
 
   tasks       Task[]
   emails      EmailLog[]
+  whatsAppMessages WhatsAppMessage[]
+  meetings Meeting[]
   // 🔐 Deal Risk Analytics (NEW)
   risk        DealRisk?
   riskHistory DealRiskHistory[]
@@ -306,6 +322,18 @@ enum EmailDirection {
   INBOUND
 }
 
+enum WhatsAppDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum WhatsAppStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
 enum EmailFolder {
   INBOX
   SENT
@@ -335,6 +363,31 @@ enum TemplateCategory {
   NEGOTIATION
   CLOSING
   OTHER
+}
+
+enum CalendarProvider {
+  GOOGLE
+  MICROSOFT
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  MISSED
+}
+
+enum AttendeeStatus {
+  ACCEPTED
+  DECLINED
+  TENTATIVE
+  NEEDS_ACTION
+}
+
+enum ReminderType {
+  EMAIL
+  BROWSER
+  BOTH
 }
 
 model DealStageHistory {
@@ -601,6 +654,43 @@ model EmailLog {
   @@index([subject])
 }
 
+model WhatsAppMessage {
+  id String @id @default(uuid())
+
+  phoneNumber String
+  messageBody String @db.Text
+
+  direction WhatsAppDirection
+  status    WhatsAppStatus @default(SENT)
+
+  metaMessageId String?  // WhatsApp message id from Meta
+
+  // CRM relations
+  dealId String?
+  deal   Deal? @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  // Sender (CRM user)
+  sentById String?
+  sentBy   User? @relation(fields: [sentById], references: [id], onDelete: SetNull)
+
+  sentAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([contactId])
+  @@index([dealId])
+  @@index([accountId])
+  @@index([sentById])
+  @@index([metaMessageId])
+}
+
+
+
 model EmailCampaign {
   id String @id @default(uuid())
 
@@ -639,4 +729,108 @@ model EmailAttachment {
   createdAt DateTime @default(now())
 
   @@index([emailId])
+}
+
+model CalendarIntegration {
+  id String @id @default(uuid())
+
+  provider CalendarProvider @default(GOOGLE)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accessToken  String @db.Text
+  refreshToken String @db.Text
+  tokenExpiry  DateTime?
+
+  calendarEmail String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, provider]) // 🔥 KEY FIX
+}
+
+model Meeting {
+  id String @id @default(uuid())
+
+  title       String
+  description String?
+
+  location String?
+
+  startTime DateTime
+  endTime   DateTime
+
+  status MeetingStatus @default(SCHEDULED)
+
+  provider CalendarProvider @default(GOOGLE)
+
+  googleEventId String? @unique
+  googleUpdatedAt DateTime?
+  microsoftEventId String? @unique
+  meetingLink   String?
+
+  organizerId String
+  organizer   User @relation(fields: [organizerId], references: [id])
+
+  dealId String?
+  deal   Deal? @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  attendees MeetingAttendee[]
+  reminders MeetingReminder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startTime])
+  @@index([organizerId])
+  @@index([dealId])
+  @@index([contactId])
+  @@index([accountId])
+}
+
+model MeetingAttendee {
+  id String @id @default(uuid())
+
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  email String
+  name  String?
+
+  responseStatus AttendeeStatus?
+
+  createdAt DateTime @default(now())
+
+  @@index([meetingId])
+  @@index([contactId])
+  @@unique([meetingId, email])
+}
+
+model MeetingReminder {
+  id String @id @default(uuid())
+
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  remindAt DateTime
+
+  type ReminderType
+
+  isSent Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([remindAt])
+  @@index([meetingId])
 }

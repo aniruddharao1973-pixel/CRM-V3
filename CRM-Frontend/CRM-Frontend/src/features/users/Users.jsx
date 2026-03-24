@@ -141,14 +141,13 @@ export default function Users() {
 
   const connectOutlook = async () => {
     try {
-      const res = await fetch(
-        "http://localhost:5000/api/email/connect/outlook",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+      const API = import.meta.env.VITE_API_BASE_URL;
+
+      const res = await fetch(`${API}/email/connect/outlook`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      );
+      });
 
       const data = await res.json();
 
@@ -197,7 +196,7 @@ export default function Users() {
               Connect Outlook
             </button>
           )} */}
-{/* 
+          {/* 
           {emailProvider === "SMTP" && (
             <button
               onClick={() => navigate("/settings/email")}

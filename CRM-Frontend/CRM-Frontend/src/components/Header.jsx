@@ -1,3 +1,4 @@
+// src\components\Header.jsx
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
@@ -22,7 +23,7 @@ const Header = ({ onMenuToggle }) => {
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-200">
       <div className="flex items-center justify-between px-4 sm:px-6 py-3">
         {/* Left side */}
-       
+
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuToggle}

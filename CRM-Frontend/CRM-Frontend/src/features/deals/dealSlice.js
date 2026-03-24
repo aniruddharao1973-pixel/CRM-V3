@@ -138,6 +138,8 @@
 
 // export const { clearDealError, clearCurrentDeal } = dealSlice.actions;
 // export default dealSlice.reducer;
+
+// src\features\deals\dealSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../api/axios";
 

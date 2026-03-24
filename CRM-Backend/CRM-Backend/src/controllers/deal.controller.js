@@ -267,7 +267,7 @@ const generateDealLogId = async (tx) => {
 //   modifiedBy: { select: { name: true } },
 // };
 
-const dealInclude = { 
+const dealInclude = {
   account: { select: { id: true, accountName: true } },
 
   contact: {
@@ -334,6 +334,7 @@ export const createDeal = asyncHandler(async (req, res) => {
       data: {
         dealName: req.body.dealName,
         stage: req.body.stage,
+        stageUpdatedAt: new Date(),
         productGroup: req.body.productGroup || null,
         weightage: req.body.weightage || null,
 
@@ -469,6 +470,11 @@ export const updateDeal = asyncHandler(async (req, res) => {
         dealName: req.body.dealName ?? existing.dealName,
 
         stage: req.body.stage ?? existing.stage,
+
+        stageUpdatedAt:
+          req.body.stage && req.body.stage !== existing.stage
+            ? new Date()
+            : existing.stageUpdatedAt,
 
         productGroup:
           req.body.productGroup !== undefined

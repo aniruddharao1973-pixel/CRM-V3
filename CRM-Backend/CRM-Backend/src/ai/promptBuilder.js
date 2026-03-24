@@ -208,7 +208,6 @@
 // }
 
 // src/ai/promptBuilder.js
-
 /* =========================================================
    CASUAL GREETING DETECTION
 ========================================================= */
@@ -474,6 +473,50 @@ Do not use markdown symbols.
    ADVANCED ANALYTICS PROMPT
 ========================================================= */
 
+// export function buildAdvancedAnalyticsPrompt(snapshot, question) {
+//   const {
+//     totalDeals,
+//     openDeals,
+//     wonDeals,
+//     winRate,
+//     monthlyWonAmount,
+//     monthlyWonCount,
+//   } = snapshot;
+
+//   const prompt = `
+// === CRM ANALYTICS SNAPSHOT ===
+
+// Total Deals: ${totalDeals}
+// Open Deals: ${openDeals}
+// Won Deals: ${wonDeals}
+
+// Win Rate: ${winRate}%
+
+// Monthly Won Revenue: ₹${monthlyWonAmount.toLocaleString()}
+// Monthly Won Count: ${monthlyWonCount}
+
+// ===============================
+
+// User Question:
+// ${question}
+
+// Provide executive CRM insights.
+// `;
+
+//   return [
+//     {
+//       role: "system",
+//       content:
+//         SECURITY_SYSTEM_PROMPT +
+//         "\nProvide executive-level analytics insights.",
+//     },
+//     {
+//       role: "user",
+//       content: prompt,
+//     },
+//   ];
+// }
+
 export function buildAdvancedAnalyticsPrompt(snapshot, question) {
   const {
     totalDeals,
@@ -483,6 +526,9 @@ export function buildAdvancedAnalyticsPrompt(snapshot, question) {
     monthlyWonAmount,
     monthlyWonCount,
   } = snapshot;
+
+  // 🔥 RANDOMIZER (forces new phrasing every time)
+  const variationSeed = Math.floor(Math.random() * 10000);
 
   const prompt = `
 === CRM ANALYTICS SNAPSHOT ===
@@ -501,7 +547,28 @@ Monthly Won Count: ${monthlyWonCount}
 User Question:
 ${question}
 
-Provide executive CRM insights.
+VARIATION SEED: ${variationSeed}
+
+IMPORTANT INSTRUCTIONS:
+
+- Generate COMPLETELY NEW wording every time
+- Do NOT repeat sentence structure from previous responses
+- Rephrase insights differently even if data is same
+- Use different vocabulary, tone, and explanation style
+- Avoid template-like repetition
+
+STRUCTURE:
+
+Pipeline Status
+- detailed explanation (3–4 lines)
+
+Risk Analysis
+- analytical reasoning (2–3 lines)
+
+Strategic Recommendations
+- actionable insights (3–4 points)
+
+Write like a senior CRM strategist.
 `;
 
   return [
@@ -509,7 +576,7 @@ Provide executive CRM insights.
       role: "system",
       content:
         SECURITY_SYSTEM_PROMPT +
-        "\nProvide executive-level analytics insights.",
+        "\nYou are a senior CRM strategist generating varied executive insights.",
     },
     {
       role: "user",
@@ -526,6 +593,8 @@ export function buildQuickAnalyticsPrompt(snapshot) {
   const { totalDeals, openDeals, wonDeals, winRate, monthlyWonAmount } =
     snapshot;
 
+  const variationSeed = Math.floor(Math.random() * 10000);
+
   const prompt = `
 CRM SNAPSHOT
 
@@ -536,7 +605,20 @@ Win Rate: ${winRate}%
 
 Monthly Revenue: ₹${monthlyWonAmount.toLocaleString()}
 
-Provide a concise executive summary.
+VARIATION SEED: ${variationSeed}
+
+INSTRUCTIONS:
+
+- Generate a SHORT summary (max 4 sentences)
+- Each time, use DIFFERENT wording
+- Do NOT reuse phrasing from previous responses
+- Keep it sharp and executive-level
+
+FORMAT:
+
+Pipeline Status:
+Main Risk:
+Immediate Action:
 `;
 
   return [
@@ -544,7 +626,7 @@ Provide a concise executive summary.
       role: "system",
       content:
         SECURITY_SYSTEM_PROMPT +
-        "\nProvide a short executive summary in 4 sentences.",
+        "\nYou generate concise but varied executive summaries.",
     },
     {
       role: "user",
@@ -684,9 +766,12 @@ export function buildEmailTemplatePrompt({
 
   const purposeGuide =
     PURPOSE_GUIDE[normalizedPurpose] ||
-    `Write an email whose purpose is: "${purpose}". 
-The email must clearly reflect this intent. 
-Do not default to sales outreach, proposals, or follow-ups unless the purpose explicitly indicates that.`;
+    `Write a clear, professional email strictly for this purpose: "${purpose}".
+
+Do NOT assume sales outreach or proposals.
+Stick exactly to the requested intent.
+
+Keep structure simple and controlled to ensure valid JSON output.`;
 
   const prompt = `
 You are an expert B2B CRM email template generator.
@@ -733,6 +818,27 @@ Incorrect:
 - addresses
 
 7. Output VALID JSON ONLY.
+
+STRICT OUTPUT ENFORCEMENT:
+- Response MUST start with { and end with }
+- STOP immediately after closing }
+- Do NOT include ANY text before or after JSON
+- Do NOT include triple backticks or code blocks
+- Do NOT include <think> or reasoning
+- Do NOT include explanations
+- Do NOT include comments
+- Do NOT include trailing commas
+- Ensure all strings are properly closed
+- Ensure JSON is fully complete (no truncation)
+- If you output anything other than JSON, your response will be rejected.
+
+Your response will be parsed using JSON.parse().
+If invalid JSON is returned, the system will fail.
+
+FAILSAFE:
+If you cannot strictly follow JSON format, return EXACTLY:
+
+{"templateName":"","subject":"","subjectAlternatives":[],"body":""}
 
 8. Bulk emails must remain general and reusable for multiple recipients.
 Do not write content that assumes only one specific person.
@@ -782,6 +888,9 @@ Category: ${category || "general"}
 EMAIL WRITING PRINCIPLES
 ────────────────────────
 
+Avoid overly long paragraphs that may break JSON formatting.
+Keep sentences controlled and clear.
+
 Write like an experienced B2B sales professional.
 
 The email should:
@@ -794,6 +903,32 @@ The email should:
 Avoid generic filler phrases.
 
 Use natural professional language.
+
+────────────────────────
+LENGTH CONTROL (STRICT)
+────────────────────────
+
+Length setting: ${length || "medium"}
+
+Follow EXACTLY:
+
+IF length = short:
+- 2 to 4 sentences ONLY
+- No long paragraphs
+- Keep it concise and direct
+
+IF length = medium:
+- 4 to 7 sentences
+- Balanced detail and readability
+
+IF length = detailed:
+- 8 to 12 sentences
+- Add more context, explanation, and value points
+- Can include 1–2 short paragraphs
+
+STRICT:
+- Do NOT exceed the sentence limit
+- Do NOT ignore length setting
 
 ────────────────────────
 PERSONALIZATION RULES
@@ -853,8 +988,12 @@ Re-engagement
 • Reintroduce value
 
 Thank You
-• Express appreciation
-• Reinforce relationship
+• Express appreciation clearly
+• Keep message SHORT and structured
+• Avoid open-ended writing
+• Avoid storytelling or explanations
+• Do NOT generate reasoning text
+• Focus only on email content
 
 Promotion
 • Highlight the offer or value
@@ -908,6 +1047,23 @@ SUBJECT LINE GUIDELINES
 ────────────────────────
 OUTPUT FORMAT
 ────────────────────────
+Example:
+{
+  "templateName": "Meeting Request Template",
+  "subject": "Quick meeting regarding {{deal.dealName}}",
+  "subjectAlternatives": [
+    "Short call to discuss next steps",
+    "Meeting request for alignment",
+    "Can we connect briefly?"
+  ],
+  "body": "{{header}}\n\nHi {{contact.firstName}},\n\nI wanted to connect regarding {{deal.dealName}}.\n\nWould you be open to a short discussion next week?\n\n{{signature}}\n{{footer}}"
+}
+
+
+IMPORTANT:
+- Ensure JSON is COMPLETE
+- Do not cut off mid-sentence
+- Do not end with backslashes (\)
 
 Return JSON ONLY:
 
@@ -930,7 +1086,12 @@ BODY STRUCTURE (MANDATORY)
 
 Hi {{contact.firstName}},
 
-Write the email based on the selected purpose.
+Write the email based on:
+- selected purpose
+- selected tone
+- selected length
+
+Ensure sentence count strictly follows LENGTH CONTROL rules.
 
 Ensure the email reads naturally and professionally.
 Avoid incomplete sentences.
@@ -942,8 +1103,24 @@ Avoid incomplete sentences.
   return [
     {
       role: "system",
-      content:
-        "You generate high-quality CRM email templates in JSON format only.",
+      content: `
+You are a STRICT JSON generator for CRM email templates.
+
+CRITICAL:
+- Output ONLY valid JSON
+- Do NOT explain anything
+- Do NOT think or reason
+- Do NOT include analysis
+- Do NOT include any text outside JSON
+- Do NOT include <think>
+
+FORMAT:
+Response MUST start with { and end with }
+
+If you break JSON format, the system will crash.
+
+You must strictly follow all rules.
+`,
     },
     {
       role: "user",

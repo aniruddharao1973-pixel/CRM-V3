@@ -220,7 +220,8 @@ export const googleCallback = async (req, res) => {
 
     console.log("✅ Gmail connected for user:", userId, gmailAddress);
 
-    res.redirect("http://localhost:5173");
+    const frontendUrl = process.env.FRONTEND_URL;
+    res.redirect(frontendUrl);
   } catch (error) {
     console.error("Google Callback Error:", error);
 
@@ -390,7 +391,8 @@ export const outlookCallback = async (req, res) => {
 
     console.log("✅ Outlook connected:", user.email);
 
-    res.redirect("http://localhost:5173");
+    const frontendUrl = process.env.FRONTEND_URL;
+    res.redirect(frontendUrl);
   } catch (error) {
     console.error("Outlook Callback Error:", error);
 

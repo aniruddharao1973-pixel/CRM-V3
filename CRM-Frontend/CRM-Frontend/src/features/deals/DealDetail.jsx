@@ -258,15 +258,17 @@ const DealDetail = () => {
 
   const emailProvider = user?.emailProvider || detectEmailProvider(user?.email);
 
-  const [tab, setTab] = useState("overview"); 
+  const [tab, setTab] = useState("overview");
   const [updatingStage, setUpdatingStage] = useState(false);
   const [hoveredStage, setHoveredStage] = useState(null);
   const [showSendEmail, setShowSendEmail] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showEmailLogs, setShowEmailLogs] = useState(false);
 
+  const API = import.meta.env.VITE_API_BASE_URL;
+
   const connectGmail = async () => {
-    const res = await fetch("http://localhost:5000/api/email/connect/google", {
+    const res = await fetch(`${API}/email/connect/google`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -277,7 +279,7 @@ const DealDetail = () => {
   };
 
   const connectOutlook = async () => {
-    const res = await fetch("http://localhost:5000/api/email/connect/outlook", {
+    const res = await fetch(`${API}/email/connect/outlook`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },

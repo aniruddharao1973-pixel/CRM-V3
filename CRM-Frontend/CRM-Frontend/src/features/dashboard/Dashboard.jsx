@@ -375,6 +375,8 @@ import {
   fetchDealsBySource,
   fetchDealMomentum,
 } from "../analytics/analyticsSlice";
+import InfoTooltip from "../deals/InfoTooltip";
+import DealMomentumInfo from "../deals/DealMomentumInfo";
 
 import Spinner from "../../components/Spinner";
 import StatCard from "./components/StatCard";
@@ -554,7 +556,7 @@ const Dashboard = () => {
       </div>
 
       {/* Deal Priority Engine */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-visible">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
           <div className="flex items-center gap-2.5">
@@ -567,9 +569,11 @@ const Dashboard = () => {
                 />
               </svg>
             </div>
-            <h2 className="text-sm font-semibold text-gray-900 tracking-tight">
-              Deal Momentum
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-gray-900 tracking-tight">
+                Deal Momentum
+              </h2>
+            </div>
           </div>
           <span className="text-[11px] text-gray-400 font-medium">
             Focus on these first
@@ -618,17 +622,26 @@ const Dashboard = () => {
               </div>
 
               {/* Score */}
-              <div className="flex flex-col items-end flex-shrink-0 gap-1">
-                <span
-                  className={`text-base font-bold leading-none ${
-                    idx === 0 ? "text-indigo-600" : "text-slate-400"
-                  }`}
-                >
-                  {deal.momentumScore}
-                </span>
-                <span className="text-[10px] text-gray-400 leading-none text-right">
-                  {deal.reason}
-                </span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex flex-col items-end">
+                  <span
+                    className={`text-base font-bold leading-none ${
+                      idx === 0 ? "text-indigo-600" : "text-slate-400"
+                    }`}
+                  >
+                    {deal.momentumScore}
+                  </span>
+
+                  <span className="text-[10px] text-gray-400 leading-none text-right">
+                    {deal.reason}
+                  </span>
+                </div>
+
+                {/* 🔥 Modern Hover Insight */}
+                <InfoTooltip
+                  position="right"
+                  content={<DealMomentumInfo deal={deal} />}
+                />
               </div>
             </div>
           ))}
