@@ -170,7 +170,7 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "http://localhost:5173",
   "http://192.168.135.54:5173",
-  "https://your-app.vercel.app",
+  "https://crm-aniruddha-v2.vercel.app",
 ];
 
 /* =========================================================
