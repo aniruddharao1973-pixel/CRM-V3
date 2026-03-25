@@ -2,14 +2,21 @@
 
 import axios from "axios";
 
+// const API = axios.create({
+//   baseURL: "/api",
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+// });
+
 const API = axios.create({
-  baseURL: "/api",
+  baseURL: "https://diligent-optimism-backend.up.railway.app/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
-
 // Request interceptor - attach token
 API.interceptors.request.use(
   (config) => {
@@ -19,7 +26,7 @@ API.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor - handle 401
@@ -29,14 +36,14 @@ API.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      
+
       const pathname = window.location.pathname;
       if (pathname !== "/login" && pathname !== "/register") {
         window.location.replace("/login");
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default API;
