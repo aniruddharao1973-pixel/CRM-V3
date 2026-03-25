@@ -194,13 +194,19 @@ app.use(
 /* =========================================================
    ✅ SOCKET.IO
 ========================================================= */
+// export const io = new Server(server, {
+//   cors: {
+//     origin: allowedOrigins,
+//     credentials: true,
+//   },
+// });
+
 export const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    credentials: true,
+    origin: "*", // or process.env.FRONTEND_URL
+    methods: ["GET", "POST"],
   },
 });
-
 io.on("connection", (socket) => {
   socket.on("join", (userId) => {
     socket.join(userId);
