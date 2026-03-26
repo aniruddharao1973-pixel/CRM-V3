@@ -87,6 +87,7 @@ npm install xlsx file-saver
 npm install nodemailer googleapis (BACKEND TERMINAL)
 npm install googleapis
 npm install react-big-calendar date-fns
+npm install multer uuid
 
 
 model EmailLog {

@@ -69,7 +69,7 @@ SEND EMAIL
 */
 export const sendEmail = async (req, res) => {
   try {
-    const { toEmail, subject, body, templateId } = req.body;
+    const { toEmail, subject, body, templateId, attachments = [] } = req.body;
 
     if (!toEmail) {
       return res.status(400).json({
@@ -94,7 +94,13 @@ export const sendEmail = async (req, res) => {
       });
     }
 
-    const email = await emailService.sendEmail(req.body, req.user.id);
+    const email = await emailService.sendEmail(
+      {
+        ...req.body,
+        attachments, // ✅ explicitly pass attachments
+      },
+      req.user.id,
+    );
 
     /*
     IMPORTANT FIX
@@ -402,165 +408,6 @@ export const outlookCallback = async (req, res) => {
     });
   }
 };
-/*
-GENERATE EMAIL TEMPLATE USING AI
-*/
-
-/*
-=====================================================
-GENERATE EMAIL TEMPLATE USING AI
-=====================================================
-*/
-
-// export const generateTemplateAI = async (req, res) => {
-//   try {
-//     const { purpose, tone, category, recipient, length } = req.body;
-
-//     console.log("🤖 AI Template Request:", {
-//       purpose,
-//       tone,
-//       category,
-//       recipient,
-//       length,
-//     });
-
-//     // Basic validation
-//     if (!purpose) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Purpose is required for AI template generation",
-//       });
-//     }
-
-//     // Forward to AI controller
-//     return generateEmailTemplateAI(req, res);
-//   } catch (error) {
-//     console.error("❌ AI Template Controller Error:", error);
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "AI template generation failed",
-//     });
-//   }
-// };
-
-/*
-=====================================================
-GENERATE EMAIL TEMPLATE USING AI
-=====================================================
-*/
-
-// export const generateTemplateAI = async (req, res) => {
-//   try {
-//     // const { purpose, tone, category, recipient, length } = req.body;
-
-//     console.log("🤖 [EMAIL CTRL] AI Template Request");
-
-//     /* ─────────────────────────────────────────────
-//        BASIC VALIDATION
-//     ───────────────────────────────────────────── */
-
-//     if (!purpose) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Purpose is required for AI template generation",
-//       });
-//     }
-
-//     /* ─────────────────────────────────────────────
-//        ALLOWED PURPOSE VALUES
-//     ───────────────────────────────────────────── */
-
-//     const allowedPurposes = [
-//       "cold outreach",
-//       "follow up",
-//       "proposal submission",
-//       "meeting request",
-//       "negotiation",
-//       "deal closing",
-//       "re-engagement",
-//       "thank you",
-
-//       // campaign purposes
-//       "promotion",
-//       "festival greeting",
-//       "newsletter",
-//       "product update",
-//       "engagement",
-//       "notification",
-//       "event invitation",
-//     ];
-
-//     const { purpose, customPurpose, tone, category, recipient, length } =
-//       req.body;
-
-//     let finalPurpose = purpose;
-
-//     /*
-// ────────────────────────────
-// CUSTOM PURPOSE SUPPORT
-// ────────────────────────────
-// */
-
-//     if (purpose && purpose.toLowerCase() === "custom") {
-//       if (!customPurpose || !customPurpose.trim()) {
-//         return res.status(400).json({
-//           success: false,
-//           message: "Custom purpose text is required",
-//         });
-//       }
-
-//       finalPurpose = customPurpose.trim();
-//     } else if (purpose && !allowedPurposes.includes(purpose.toLowerCase())) {
-
-//     /*
-// ────────────────────────────
-// STANDARD PURPOSE VALIDATION
-// ────────────────────────────
-// */
-//       console.warn("⚠️ Invalid AI purpose:", purpose);
-
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid email purpose",
-//       });
-//     }
-
-//     /*
-// ────────────────────────────
-// PASS FINAL PURPOSE TO AI
-// ────────────────────────────
-// */
-
-//     req.body.purpose = finalPurpose;
-
-//     /* ─────────────────────────────────────────────
-//        LENGTH VALIDATION
-//     ───────────────────────────────────────────── */
-
-//     const allowedLengths = ["short", "medium", "long"];
-
-//     if (length && !allowedLengths.includes(length.toLowerCase())) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid email length",
-//       });
-//     }
-
-//     /* ─────────────────────────────────────────────
-//        FORWARD TO AI CONTROLLER
-//     ───────────────────────────────────────────── */
-
-//     return generateEmailTemplateAI(req, res);
-//   } catch (error) {
-//     console.error("❌ [EMAIL CTRL] AI Template Error:", error);
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "AI template generation failed",
-//     });
-//   }
-// };
 
 /*
 =====================================================

@@ -720,15 +720,18 @@ model EmailAttachment {
   id String @id @default(uuid())
 
   fileName String
-  fileUrl  String
+  fileUrl  String   // always store URL, not path
+  fileType String?  // 🔥 ADD THIS
   fileSize Int?
+
+  folder   String?  // 🔥 "2026-03-16" (your date folder)
+  uploadedAt DateTime @default(now()) // 🔥 better than createdAt
 
   emailId String
   email   EmailLog @relation("EmailAttachments", fields: [emailId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-
   @@index([emailId])
+  @@index([folder]) // 🔥 useful later
 }
 
 model CalendarIntegration {

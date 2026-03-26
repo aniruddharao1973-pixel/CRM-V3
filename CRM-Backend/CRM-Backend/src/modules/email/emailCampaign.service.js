@@ -437,7 +437,7 @@ export async function sendBulkEmailCampaign({
   */
 
   const BATCH_SIZE = 3; // Microsoft allows ~4 concurrent requests safely
-  const BATCH_DELAY = 1500; // wait 1.5s between batches
+  const BATCH_DELAY = 180000; // wait 1.5s between batches
 
   /*
   =====================================================

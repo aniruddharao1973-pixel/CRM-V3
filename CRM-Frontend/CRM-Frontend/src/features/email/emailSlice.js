@@ -207,6 +207,35 @@ export const deleteEmailLog = createAsyncThunk(
     }
   },
 );
+
+/*
+=====================================================
+UPLOAD ATTACHMENTS
+=====================================================
+*/
+export const uploadAttachments = createAsyncThunk(
+  "email/uploadAttachments",
+  async (files, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+
+      files.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      const res = await API.post(`${EMAIL_API}/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Upload failed");
+    }
+  },
+);
+
 /*
 =====================================================
 INITIAL STATE
@@ -215,6 +244,7 @@ INITIAL STATE
 const initialState = {
   templates: [],
   logs: [],
+  attachments: [],
 
   loadingTemplates: false,
   loadingLogs: false,
@@ -222,6 +252,7 @@ const initialState = {
   sendingCampaign: false,
 
   generatingTemplate: false,
+  uploadingAttachments: false,
 
   sendSuccess: false,
   campaignResult: null,
@@ -261,6 +292,20 @@ const emailSlice = createSlice({
 
     resetSendStatus: (state) => {
       state.sendSuccess = false;
+    },
+
+    setAttachments: (state, action) => {
+      state.attachments = action.payload;
+    },
+
+    removeAttachment: (state, action) => {
+      state.attachments = state.attachments.filter(
+        (file) => file.fileUrl !== action.payload,
+      );
+    },
+
+    clearAttachments: (state) => {
+      state.attachments = [];
     },
 
     /*
@@ -453,6 +498,34 @@ DELETE EMAIL LOG
     builder.addCase(deleteEmailLog.fulfilled, (state, action) => {
       state.logs = state.logs.filter((log) => log.id !== action.payload.id);
     });
+
+    /*
+=====================================================
+UPLOAD EMAIL FILES
+=====================================================
+*/
+
+    builder
+      .addCase(uploadAttachments.pending, (state) => {
+        state.uploadingAttachments = true;
+      })
+      .addCase(uploadAttachments.fulfilled, (state, action) => {
+        state.uploadingAttachments = false;
+
+        // Append new files
+        const newFiles = action.payload.filter(
+          (newFile) =>
+            !state.attachments.some(
+              (existing) => existing.fileUrl === newFile.fileUrl,
+            ),
+        );
+
+        state.attachments.push(...newFiles);
+      })
+      .addCase(uploadAttachments.rejected, (state, action) => {
+        state.uploadingAttachments = false;
+        state.error = action.payload;
+      });
   },
 });
 
@@ -463,6 +536,9 @@ export const {
   resetSendStatus,
   updateCampaignProgress,
   resetCampaignProgress,
+  setAttachments,
+  removeAttachment,
+  clearAttachments,
 } = emailSlice.actions;
 
 export default emailSlice.reducer;

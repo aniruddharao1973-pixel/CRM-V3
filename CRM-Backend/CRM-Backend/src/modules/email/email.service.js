@@ -449,6 +449,7 @@ import prisma from "../../utils/prisma.js";
 import { renderTemplate } from "./templateRenderer.js";
 import { sendEmailGateway } from "./emailGateway.js";
 import { parseTemplate } from "./templateParser.js";
+import path from "path";
 
 /*
 =====================================================
@@ -533,6 +534,7 @@ export const sendEmail = async (data, userId) => {
   let status = "SENT";
   let messageId = null;
   let providerUsed = "SMTP";
+  const attachments = data.attachments || [];
 
   console.log("=====================================================");
   console.log("📧 CRM Email Send Started");
@@ -682,6 +684,11 @@ RENDER FINAL HTML EMAIL
 
     let result;
 
+    const emailAttachments = attachments.map((file) => ({
+      filename: file.fileName,
+      path: path.join(process.cwd(), file.fileUrl), // ✅ convert URL → absolute path
+    }));
+
     try {
       result = await sendEmailGateway({
         userId,
@@ -690,6 +697,7 @@ RENDER FINAL HTML EMAIL
         subject,
         html: body,
         provider: detectedProvider,
+        attachments: emailAttachments,
       });
 
       messageId = result?.messageId || null;
@@ -743,6 +751,44 @@ RENDER FINAL HTML EMAIL
   //     subject,
   //     body,
 
+  // const email = await prisma.emailLog.create({
+  //   data: {
+  //     fromEmail: user?.email || null,
+  //     toEmail: data.toEmail,
+
+  //     ccEmails: data.ccEmails || [],
+  //     bccEmails: data.bccEmails || [],
+
+  //     subject,
+  //     body,
+  //     provider: providerUsed,
+  //     messageId,
+
+  //     dealId: data.dealId || null,
+  //     contactId: data.contactId || null,
+  //     accountId: data.accountId || null,
+
+  //     templateId: data.templateId || null,
+
+  //     sentById: userId,
+
+  //     status,
+  //     direction: "OUTBOUND",
+  //     folder: status === "SENT" ? "SENT" : "ARCHIVED",
+
+  //     sentAt: status === "SENT" ? new Date() : null,
+  //   },
+
+  //   include: {
+  //     sentBy: {
+  //       select: {
+  //         id: true,
+  //         name: true,
+  //       },
+  //     },
+  //   },
+  // });
+
   const email = await prisma.emailLog.create({
     data: {
       fromEmail: user?.email || null,
@@ -761,7 +807,6 @@ RENDER FINAL HTML EMAIL
       accountId: data.accountId || null,
 
       templateId: data.templateId || null,
-
       sentById: userId,
 
       status,
@@ -769,6 +814,17 @@ RENDER FINAL HTML EMAIL
       folder: status === "SENT" ? "SENT" : "ARCHIVED",
 
       sentAt: status === "SENT" ? new Date() : null,
+
+      // 🔥 ADD THIS BLOCK
+      attachments: {
+        create: attachments.map((file) => ({
+          fileName: file.fileName,
+          fileUrl: file.fileUrl,
+          fileType: file.fileType,
+          fileSize: file.fileSize,
+          folder: file.folder,
+        })),
+      },
     },
 
     include: {
@@ -778,6 +834,7 @@ RENDER FINAL HTML EMAIL
           name: true,
         },
       },
+      attachments: true, // 🔥 ADD THIS
     },
   });
 

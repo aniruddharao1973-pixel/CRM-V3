@@ -16,8 +16,8 @@ export const sendEmailGateway = async ({
   subject,
   html,
   provider,
+  attachments = [], // 🔥 ADD THIS
 }) => {
-  console.log("=====================================");
   console.log("📨 Email Gateway Started");
   console.log("Provider:", provider);
   console.log("From:", from);
@@ -43,13 +43,14 @@ export const sendEmailGateway = async ({
     console.warn("⚠️ Email body is empty");
   }
 
-  const attachments = [
-    {
-      filename: "Micro_2026.png",
-      path: path.join(process.cwd(), "public", "Micro_2026.png"),
-      cid: "micrologic-logo",
-    },
-  ];
+  const logoAttachment = {
+    filename: "Micro_2026.png",
+    path: path.join(process.cwd(), "public", "Micro_2026.png"),
+    cid: "micrologic-logo",
+  };
+
+  // 🔥 Merge logo + uploaded files
+  const finalAttachments = [logoAttachment, ...attachments];
 
   console.log(
     "Logo path:",
@@ -72,7 +73,7 @@ export const sendEmailGateway = async ({
         to,
         subject,
         html,
-        attachments,
+        attachments: finalAttachments,
       });
     }
 
@@ -85,7 +86,7 @@ export const sendEmailGateway = async ({
         to,
         subject,
         html,
-        attachments,
+        attachments: finalAttachments,
       });
     }
 
@@ -97,7 +98,7 @@ export const sendEmailGateway = async ({
       to,
       subject,
       html,
-      attachments,
+      attachments: finalAttachments,
     });
   } catch (error) {
     console.error("❌ Email Gateway Failed:", error.message);

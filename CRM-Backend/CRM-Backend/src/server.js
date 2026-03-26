@@ -281,6 +281,9 @@ app.use("/api/calendar", calendarRoutes);
 
 app.use("/public", express.static("public"));
 
+// ✅ ADD THIS (CRITICAL FOR ATTACHMENTS)
+app.use("/uploads", express.static("uploads"));
+
 /* =========================================================
    ✅ HEALTH CHECK
 ========================================================= */

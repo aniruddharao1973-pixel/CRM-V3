@@ -60,7 +60,6 @@
 // export default DealMomentumInfo;
 
 // src\features\deals\DealMomentumInfo.jsx
-
 const DealMomentumInfo = ({ deal }) => {
   const b = deal.breakdown || {};
   const e = deal.explanation || {};
