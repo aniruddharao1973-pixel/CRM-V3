@@ -170,8 +170,8 @@ function securityBlockedResponse() {
 export async function askAI(req, res) {
   const start = Date.now();
 
-  console.log("🧠 [AI CTRL] ══════════════════════════════════");
-  console.log("🧠 [AI CTRL] Request received:", new Date().toISOString());
+  // console.log("🧠 [AI CTRL] ══════════════════════════════════");
+  // console.log("🧠 [AI CTRL] Request received:", new Date().toISOString());
 
   try {
     const { question } = req.body;
@@ -227,9 +227,9 @@ export async function askAI(req, res) {
       const t1 = Date.now();
       const insights = await getSalesInsights();
 
-      console.log(
-        `📈 [AI CTRL] Sales insights fetched in ${Date.now() - t1}ms`,
-      );
+      // console.log(
+      //   `📈 [AI CTRL] Sales insights fetched in ${Date.now() - t1}ms`,
+      // );
 
       messages = buildSalesPrompt(insights, question);
     }
@@ -267,7 +267,7 @@ export async function askAI(req, res) {
       console.log(`🚀 [AI CTRL] FAST RESPONSE: ${total}ms`);
     }
 
-    console.log("🧠 [AI CTRL] ══════════════════════════════════");
+    // console.log("🧠 [AI CTRL] ══════════════════════════════════");
 
     res.json({ answer });
   } catch (err) {
@@ -512,10 +512,11 @@ export async function askAnalyticsAI(req, res) {
         .replace(/<\/think>/gi, "")
         .trim();
     }
+    
 
-    console.log("🧠 [ANALYTICS AI] RAW AI RESPONSE:");
-    console.log(answer);
-    console.log("────────────────────────");
+    // console.log("🧠 [ANALYTICS AI] RAW AI RESPONSE:");
+    // console.log(answer);
+    // console.log("────────────────────────");
 
     /* ─────────────────────────────────────────────
        ✅ NORMALIZATION + HARD GUARANTEE (CRITICAL FIX)

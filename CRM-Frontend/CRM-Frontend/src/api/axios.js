@@ -2,21 +2,21 @@
 
 import axios from "axios";
 
-// const API = axios.create({
-//   baseURL: "/api",
-//   withCredentials: true,
-//   headers: {
-//     "Content-Type": "application/json",
-//   },
-// });
-
 const API = axios.create({
-  baseURL: "https://diligent-optimism-backend.up.railway.app/api",
+  baseURL: "/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+// const API = axios.create({
+//   baseURL: "https://diligent-optimism-backend.up.railway.app/api",
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+// });
 // Request interceptor - attach token
 API.interceptors.request.use(
   (config) => {
