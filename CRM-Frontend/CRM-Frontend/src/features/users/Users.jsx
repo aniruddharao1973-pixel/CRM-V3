@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchUsers, deleteUser } from "../auth/authSlice";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import {
   PlusIcon,
@@ -97,6 +100,7 @@ export default function Users() {
     name: "",
   });
   const [deleting, setDeleting] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   useEffect(() => {
     dispatch(fetchUsers());
@@ -168,6 +172,51 @@ export default function Users() {
   const adminCount = users.filter((u) => u.role === "ADMIN").length;
   const managerCount = users.filter((u) => u.role === "MANAGER").length;
 
+  const prepareExportData = () => {
+    return users.map((u) => ({
+      UserID: u.id,
+      Name: u.name,
+      Email: u.email,
+      Role: u.role,
+      Status: u.isActive ? "Active" : "Inactive",
+      EmailConnected: u.emailProvider ? "Yes" : "No",
+    }));
+  };
+
+  const exportCSV = () => {
+    const data = prepareExportData();
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, `users_export_${Date.now()}.csv`);
+
+    setShowExportDropdown(false);
+  };
+
+  const exportExcel = () => {
+    const data = prepareExportData();
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, `users_export_${Date.now()}.xlsx`);
+
+    setShowExportDropdown(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -178,37 +227,50 @@ export default function Users() {
             Manage team members and their access levels
           </p>
         </div>
-        <div className="flex gap-3">
-          {/* {emailProvider === "GOOGLE" && (
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+          {/* EXPORT */}
+          <div className="relative">
             <button
-              onClick={connectGmail}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-all duration-200 shadow-sm"
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+              disabled={!users.length}
+              className="inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40"
             >
-              Connect Gmail
+              <ArrowDownTrayIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Export</span>
             </button>
-          )} */}
 
-          {/* {emailProvider === "MICROSOFT" && (
-            <button
-              onClick={connectOutlook}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm"
-            >
-              Connect Outlook
-            </button>
-          )} */}
-          {/* 
-          {emailProvider === "SMTP" && (
-            <button
-              onClick={() => navigate("/settings/email")}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-all duration-200 shadow-sm"
-            >
-              Configure SMTP
-            </button>
-          )} */}
+            {showExportDropdown && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowExportDropdown(false)}
+                />
 
+                {/* Dropdown (RESPONSIVE SAFE) */}
+                <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-44 max-w-[95vw] bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <button
+                    onClick={exportExcel}
+                    className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
+                  >
+                    Export as Excel
+                  </button>
+
+                  <button
+                    onClick={exportCSV}
+                    className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
+                  >
+                    Export as CSV
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* ADD USER */}
           <Link
             to="/users/create"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700"
           >
             <PlusIcon className="w-5 h-5" />
             Add User
@@ -337,11 +399,11 @@ export default function Users() {
                         {/* User Info */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                            {/* <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm">
                               <span className="text-white font-semibold text-sm">
                                 {user.name?.charAt(0)?.toUpperCase()}
                               </span>
-                            </div>
+                            </div> */}
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className="text-sm font-semibold text-gray-900">
@@ -353,9 +415,9 @@ export default function Users() {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-gray-400 mt-0.5">
+                              {/* <p className="text-xs text-gray-400 mt-0.5">
                                 ID: {user.id?.slice(0, 8)}...
-                              </p>
+                              </p> */}
                             </div>
                           </div>
                         </td>

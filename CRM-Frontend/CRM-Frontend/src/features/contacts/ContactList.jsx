@@ -296,6 +296,9 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { formatLabel } from "../../constants";
 import Avatar from "../../components/Avatar";
 import toast from "react-hot-toast";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import {
   PlusIcon,
   EyeIcon,
@@ -373,6 +376,7 @@ const ContactList = () => {
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [showTemplateManager, setShowTemplateManager] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const debouncedSearch = useDebounce(search);
 
@@ -407,6 +411,54 @@ const ContactList = () => {
   };
 
   const hasFilters = search;
+
+  const prepareExportData = () => {
+    return contacts.map((c) => ({
+      Name: `${c.firstName} ${c.lastName}`,
+      Email: c.email || "",
+      Phone: c.phone || "",
+      Account: c.account?.accountName || "",
+      LeadSource: c.leadSource || "",
+      Deals: c._count?.deals || 0,
+      CreatedAt: c.createdAt
+        ? new Date(c.createdAt).toLocaleDateString("en-GB")
+        : "",
+    }));
+  };
+
+  const exportCSV = () => {
+    const data = prepareExportData();
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, `contacts_export_${Date.now()}.csv`);
+
+    setShowExportDropdown(false);
+  };
+
+  const exportExcel = () => {
+    const data = prepareExportData();
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Contacts");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, `contacts_export_${Date.now()}.xlsx`);
+
+    setShowExportDropdown(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -457,41 +509,86 @@ const ContactList = () => {
 
       {/* Search & Filters */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search Input */}
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search by name, email, or phone..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            />
+        <div className="flex flex-col gap-4">
+          {/* TOP ROW */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+            {/* SEARCH */}
+            <div className="relative w-full sm:flex-1 sm:min-w-0">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search by name, email, or phone..."
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* ACTIONS */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+              {/* EXPORT */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportDropdown(!showExportDropdown)}
+                  disabled={!contacts.length}
+                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-sm font-medium bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40"
+                >
+                  <ArrowDownTrayIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Export</span>
+                </button>
+
+                {showExportDropdown && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowExportDropdown(false)}
+                    />
+
+                    {/* Dropdown */}
+                    <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                      <button
+                        onClick={exportExcel}
+                        className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
+                      >
+                        Export as Excel
+                      </button>
+
+                      <button
+                        onClick={exportCSV}
+                        className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
+                      >
+                        Export as CSV
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* CLEAR */}
+              {hasFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  <XMarkIcon className="w-4 h-4 mr-1 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Clear</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Clear Filters */}
-          {hasFilters && (
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              <XMarkIcon className="w-4 h-4 mr-1.5" />
-              Clear
-            </button>
-          )}
-        </div>
-
-        {/* Results Count */}
-        <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-          <UserGroupIcon className="w-4 h-4" />
-          <span>
-            {pagination?.total || 0} contact{pagination?.total !== 1 ? "s" : ""}{" "}
-            found
-          </span>
+          {/* RESULTS COUNT */}
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <UserGroupIcon className="w-4 h-4" />
+            <span>
+              {pagination?.total || 0} contact
+              {pagination?.total !== 1 ? "s" : ""} found
+            </span>
+          </div>
         </div>
       </div>
 

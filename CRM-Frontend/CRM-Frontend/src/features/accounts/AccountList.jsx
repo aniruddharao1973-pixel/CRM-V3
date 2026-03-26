@@ -1,4 +1,3 @@
-
 // // src/features/accounts/AccountList.jsx
 // import { useEffect, useState } from "react";
 // import { useDispatch, useSelector } from "react-redux";
@@ -628,14 +627,17 @@
 // };
 
 // export default AccountList;
-// src/features/accounts/AccountList.jsx
 
+// src/features/accounts/AccountList.jsx
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchAccounts, deleteAccount } from "./accountSlice";
 import { useDebounce } from "../../hooks/useDebounce";
 import toast from "react-hot-toast";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import {
   PlusIcon,
   EyeIcon,
@@ -676,6 +678,7 @@ const AccountList = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [deleting, setDeleting] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [deleteModal, setDeleteModal] = useState({
     open: false,
     id: null,
@@ -706,6 +709,52 @@ const AccountList = () => {
     setPage(1);
   };
 
+  const prepareExportData = () => {
+    return accounts.map((a) => ({
+      Name: a.accountName,
+      Phone: a.phone || "",
+      Industry: a.industry || "",
+      Rating: a.rating || "",
+      Owner: a.owner?.name || "",
+      Contacts: a._count?.contacts || 0,
+      Deals: a._count?.deals || 0,
+    }));
+  };
+
+  const exportCSV = () => {
+    const data = prepareExportData();
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, `accounts_export_${Date.now()}.csv`);
+
+    setShowExportDropdown(false);
+  };
+
+  const exportExcel = () => {
+    const data = prepareExportData();
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Accounts");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, `accounts_export_${Date.now()}.xlsx`);
+
+    setShowExportDropdown(false);
+  };
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -727,9 +776,9 @@ const AccountList = () => {
 
       {/* Filters Bar */}
       <div className="bg-white rounded-xl border border-gray-200 p-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          {/* SEARCH */}
+          <div className="relative w-full sm:flex-1 sm:min-w-0">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -739,20 +788,62 @@ const AccountList = () => {
                 setPage(1);
               }}
               placeholder="Search accounts..."
-              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all"
+              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white"
             />
           </div>
 
-          {/* Clear Button */}
-          {search && (
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <XMarkIcon className="w-4 h-4" />
-              Clear
-            </button>
-          )}
+          {/* ACTIONS */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+            {/* EXPORT */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                disabled={!accounts.length}
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40"
+              >
+                <ArrowDownTrayIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+
+              {showExportDropdown && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowExportDropdown(false)}
+                  />
+
+                  {/* Dropdown (FIXED RESPONSIVE) */}
+                  <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-44 max-w-[95vw] bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                    <button
+                      onClick={exportExcel}
+                      className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
+                    >
+                      Export as Excel
+                    </button>
+
+                    <button
+                      onClick={exportCSV}
+                      className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
+                    >
+                      Export as CSV
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* CLEAR */}
+            {search && (
+              <button
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              >
+                <XMarkIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Clear</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Results Info */}
@@ -1040,9 +1131,7 @@ const AccountList = () => {
                         <EyeIcon className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() =>
-                          navigate(`/accounts/${account.id}/edit`)
-                        }
+                        onClick={() => navigate(`/accounts/${account.id}/edit`)}
                         className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
                       >
                         <PencilSquareIcon className="w-4 h-4" />

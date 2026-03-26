@@ -605,7 +605,7 @@ const SortDropdown = ({ isOpen, onClose, sortConfig, onSortChange }) => {
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
       {/* Dropdown */}
-      <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-2xl z-50 overflow-hidden">
+      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-80 max-w-[95vw] bg-white rounded-xl border border-gray-200 shadow-2xl z-50 overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
           <div className="flex items-center justify-between">
@@ -1039,7 +1039,7 @@ const DealList = () => {
                     onClick={() => setShowExportDropdown(false)}
                   />
 
-                  <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
                     <button
                       onClick={exportExcel}
                       className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
