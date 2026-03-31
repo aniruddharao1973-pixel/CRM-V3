@@ -19,6 +19,8 @@
 // router.route("/:id").get(getAccount).put(validateAccount, updateAccount).delete(deleteAccount);
 
 // export default router;
+
+// src\routes\account.routes.js
 import { Router } from "express";
 import {
   getAccounts,
@@ -27,6 +29,7 @@ import {
   updateAccount,
   deleteAccount,
   getAccountsDropdown,
+  restoreAccount,
 } from "../controllers/account.controller.js";
 
 import { protect, authorize } from "../middlewares/auth.middleware.js";
@@ -43,8 +46,28 @@ router.get("/", getAccounts);
 router.get("/:id", getAccount);
 
 // 🛑 ADMIN ONLY → create / update / delete
-router.post("/", authorize("ADMIN"), validateAccount, createAccount);
-router.put("/:id", authorize("ADMIN"), validateAccount, updateAccount);
-router.delete("/:id", authorize("ADMIN"), deleteAccount);
+router.post(
+  "/",
+  authorize("ADMIN", "MANAGER", "SALES_REP"),
+  validateAccount,
+  createAccount,
+);
+router.put(
+  "/:id",
+  authorize("ADMIN", "MANAGER", "SALES_REP"),
+  validateAccount,
+  updateAccount,
+);
+router.delete(
+  "/:id",
+  authorize("ADMIN", "MANAGER"),
+  deleteAccount,
+);
+
+router.patch(
+  "/:id/restore",
+  authorize("ADMIN", "MANAGER"),
+  restoreAccount,
+);
 
 export default router;

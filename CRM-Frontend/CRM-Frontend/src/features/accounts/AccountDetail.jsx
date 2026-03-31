@@ -49,11 +49,11 @@
 //           >
 //             <ArrowLeftIcon className="w-5 h-5 text-gray-500" />
 //           </button>
-          
+
 //           {/* Account Image or Icon */}
 //           {account.image ? (
-//             <img 
-//               src={account.image} 
+//             <img
+//               src={account.image}
 //               alt={account.accountName}
 //               className="w-14 h-14 rounded-xl object-cover"
 //             />
@@ -62,7 +62,7 @@
 //               <BuildingOffice2Icon className="w-7 h-7 text-blue-600" />
 //             </div>
 //           )}
-          
+
 //           <div>
 //             <h1 className="text-2xl font-bold text-gray-900">{account.accountName}</h1>
 //             <p className="text-sm text-gray-500">
@@ -243,8 +243,8 @@
 // };
 
 // export default AccountDetail;
-// src/features/accounts/AccountDetail.jsx
 
+// src/features/accounts/AccountDetail.jsx
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -313,11 +313,19 @@ const InfoItem = ({ icon: Icon, label, value, isLink, href, external }) => {
 
   if (isLink && href) {
     return external ? (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="block hover:bg-gray-50 rounded-lg transition-colors">
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block hover:bg-gray-50 rounded-lg transition-colors"
+      >
         {content}
       </a>
     ) : (
-      <Link to={href} className="block hover:bg-gray-50 rounded-lg transition-colors">
+      <Link
+        to={href}
+        className="block hover:bg-gray-50 rounded-lg transition-colors"
+      >
         {content}
       </Link>
     );
@@ -338,12 +346,16 @@ const StatCard = ({ icon: Icon, label, value, color = "gray" }) => {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg ${colorClasses[color]} flex items-center justify-center`}>
+        <div
+          className={`w-10 h-10 rounded-lg ${colorClasses[color]} flex items-center justify-center`}
+        >
           <Icon className="w-5 h-5" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs text-gray-500">{label}</p>
-          <p className="text-sm font-semibold text-gray-900 truncate">{value || "—"}</p>
+          <p className="text-sm font-semibold text-gray-900 truncate">
+            {value || "—"}
+          </p>
         </div>
       </div>
     </div>
@@ -383,7 +395,9 @@ const DealCard = ({ deal }) => {
           <p className="text-sm font-semibold text-gray-900">
             {formatCurrency(deal.amount)}
           </p>
-          <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium border ${getStageColor(deal.stage)}`}>
+          <span
+            className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium border ${getStageColor(deal.stage)}`}
+          >
             {formatLabel(deal.stage)}
           </span>
         </div>
@@ -408,7 +422,9 @@ const ContactCard = ({ contact }) => (
       <p className="text-sm font-medium text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
         {contact.firstName} {contact.lastName || ""}
       </p>
-      <p className="text-xs text-gray-500 truncate">{contact.email || contact.title || "—"}</p>
+      <p className="text-xs text-gray-500 truncate">
+        {contact.email || contact.title || "—"}
+      </p>
     </div>
     <ChevronRightIcon className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors flex-shrink-0" />
   </Link>
@@ -424,11 +440,15 @@ const AddressCard = ({ title, icon: Icon, address, color = "indigo" }) => {
 
   return (
     <div className="flex items-start gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
-      <div className={`w-10 h-10 rounded-lg ${colorClasses[color]} flex items-center justify-center flex-shrink-0`}>
+      <div
+        className={`w-10 h-10 rounded-lg ${colorClasses[color]} flex items-center justify-center flex-shrink-0`}
+      >
         <Icon className="w-5 h-5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{title}</p>
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+          {title}
+        </p>
         <p className="text-sm text-gray-700 leading-relaxed">{address}</p>
       </div>
     </div>
@@ -497,11 +517,16 @@ const AccountDetail = () => {
     <div className="max-w-6xl mx-auto">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm mb-6">
-        <Link to="/accounts" className="text-gray-500 hover:text-gray-700 transition-colors">
+        <Link
+          to="/accounts"
+          className="text-gray-500 hover:text-gray-700 transition-colors"
+        >
           Accounts
         </Link>
         <ChevronRightIcon className="w-4 h-4 text-gray-400" />
-        <span className="text-gray-900 font-medium truncate">{account.accountName}</span>
+        <span className="text-gray-900 font-medium truncate">
+          {account.accountName}
+        </span>
       </nav>
 
       {/* Header Card */}
@@ -543,7 +568,8 @@ const AccountDetail = () => {
                 )}
                 {account.owner?.name && (
                   <span className="text-sm text-gray-600">
-                    Owner: <span className="font-medium">{account.owner.name}</span>
+                    Owner:{" "}
+                    <span className="font-medium">{account.owner.name}</span>
                   </span>
                 )}
               </div>
@@ -556,13 +582,15 @@ const AccountDetail = () => {
           </div>
 
           <div className="flex items-center gap-3 ml-auto sm:ml-0">
-            <button
-              onClick={() => navigate(`/accounts/${id}/edit`)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 active:scale-[0.98] transition-all duration-200 shadow-sm"
-            >
-              <PencilSquareIcon className="w-4 h-4" />
-              Edit Account
-            </button>
+            {account.lifecycle !== "DEACTIVATED" && (
+              <button
+                onClick={() => navigate(`/accounts/${id}/edit`)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 active:scale-[0.98] transition-all duration-200 shadow-sm"
+              >
+                <PencilSquareIcon className="w-4 h-4" />
+                Edit Account
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -578,7 +606,9 @@ const AccountDetail = () => {
         <StatCard
           icon={GlobeAltIcon}
           label="Website"
-          value={account.website ? account.website.replace(/^https?:\/\//, '') : null}
+          value={
+            account.website ? account.website.replace(/^https?:\/\//, "") : null
+          }
           color="green"
         />
         <StatCard
@@ -612,11 +642,7 @@ const AccountDetail = () => {
                 label="Industry"
                 value={account.industry}
               />
-              <InfoItem
-                icon={StarIcon}
-                label="Rating"
-                value={account.rating}
-              />
+              <InfoItem icon={StarIcon} label="Rating" value={account.rating} />
               <InfoItem
                 icon={BuildingOfficeIcon}
                 label="Ownership"
@@ -637,7 +663,11 @@ const AccountDetail = () => {
                   label="Website"
                   value={account.website}
                   isLink
-                  href={account.website.startsWith('http') ? account.website : `https://${account.website}`}
+                  href={
+                    account.website.startsWith("http")
+                      ? account.website
+                      : `https://${account.website}`
+                  }
                   external
                 />
               )}
@@ -726,7 +756,11 @@ const AccountDetail = () => {
               )}
               {account.website && (
                 <a
-                  href={account.website.startsWith('http') ? account.website : `https://${account.website}`}
+                  href={
+                    account.website.startsWith("http")
+                      ? account.website
+                      : `https://${account.website}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
@@ -832,7 +866,10 @@ const AccountDetail = () => {
                   <p className="text-xs font-medium text-gray-700">
                     {formatDate(account.createdAt)}
                     {account.createdBy?.name && (
-                      <span className="text-gray-500"> by {account.createdBy.name}</span>
+                      <span className="text-gray-500">
+                        {" "}
+                        by {account.createdBy.name}
+                      </span>
                     )}
                   </p>
                 </div>
@@ -844,7 +881,10 @@ const AccountDetail = () => {
                   <p className="text-xs font-medium text-gray-700">
                     {formatDate(account.updatedAt)}
                     {account.modifiedBy?.name && (
-                      <span className="text-gray-500"> by {account.modifiedBy.name}</span>
+                      <span className="text-gray-500">
+                        {" "}
+                        by {account.modifiedBy.name}
+                      </span>
                     )}
                   </p>
                 </div>

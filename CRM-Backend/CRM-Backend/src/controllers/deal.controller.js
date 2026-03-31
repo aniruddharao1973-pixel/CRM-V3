@@ -206,179 +206,280 @@
 // });
 
 // CRM-Backend\CRM-Backend\src\controllers\deal.controller.js
-import prisma from "../utils/prisma.js";
-import { ApiError, asyncHandler } from "../utils/ApiError.js";
+// import prisma from "../utils/prisma.js";
+// import { ApiError, asyncHandler } from "../utils/ApiError.js";
 
-/* =========================================================
-   STAGE → PROBABILITY MAP
-========================================================= */
-const STAGE_PROBABILITY = {
-  RFQ: 10,
-  VISIT_MEETING: 20,
-  PREVIEW: 30,
-  TECHNICAL_PROPOSAL: 40,
-  COMMERCIAL_PROPOSAL: 50,
-  REVIEW_FEEDBACK: 60,
-  MOVED_TO_PURCHASE: 75,
-  NEGOTIATION: 90,
-  CLOSED_WON: 100,
-  CLOSED_LOST: 0,
-  CLOSED_LOST_TO_COMPETITION: 0,
-  REGRETTED: 0,
-};
-
-/* =========================================================
-   FY DEAL LOG ID GENERATOR
-========================================================= */
-const generateDealLogId = async (tx) => {
-  const now = new Date();
-
-  const year = now.getFullYear();
-  const nextYear = year + 1;
-
-  const fy =
-    now.getMonth() + 1 >= 4
-      ? `FY${String(year).slice(2)}${String(nextYear).slice(2)}`
-      : `FY${String(year - 1).slice(2)}${String(year).slice(2)}`;
-
-  const last = await tx.deal.findFirst({
-    where: { dealLogId: { startsWith: fy } },
-    orderBy: { dealLogId: "desc" },
-    select: { dealLogId: true },
-  });
-
-  let number = 1000;
-
-  if (last?.dealLogId) {
-    number = parseInt(last.dealLogId.split(".")[1]) + 1;
-  }
-
-  return `${fy}.${number}`;
-};
-
-/* =========================================================
-   COMMON INCLUDE (for frontend)
-========================================================= */
-// const dealInclude = {
-//   account: { select: { id: true, accountName: true } },
-//   contact: { select: { id: true, firstName: true, lastName: true } },
-//   owner: { select: { id: true, name: true } },
-//   createdBy: { select: { name: true } },
-//   modifiedBy: { select: { name: true } },
+// /* =========================================================
+//    STAGE → PROBABILITY MAP
+// ========================================================= */
+// const STAGE_PROBABILITY = {
+//   RFQ: 10,
+//   VISIT_MEETING: 20,
+//   PREVIEW: 30,
+//   TECHNICAL_PROPOSAL: 40,
+//   COMMERCIAL_PROPOSAL: 50,
+//   REVIEW_FEEDBACK: 60,
+//   MOVED_TO_PURCHASE: 75,
+//   NEGOTIATION: 90,
+//   CLOSED_WON: 100,
+//   CLOSED_LOST: 0,
+//   CLOSED_LOST_TO_COMPETITION: 0,
+//   REGRETTED: 0,
 // };
 
-const dealInclude = {
-  account: { select: { id: true, accountName: true } },
+// /* =========================================================
+//    FY DEAL LOG ID GENERATOR
+// ========================================================= */
+// const generateDealLogId = async (tx) => {
+//   const now = new Date();
 
-  contact: {
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-    },
-  },
+//   const year = now.getFullYear();
+//   const nextYear = year + 1;
 
-  owner: { select: { id: true, name: true } },
-  createdBy: { select: { id: true, name: true } },
-  modifiedBy: { select: { id: true, name: true } },
+//   const fy =
+//     now.getMonth() + 1 >= 4
+//       ? `FY${String(year).slice(2)}${String(nextYear).slice(2)}`
+//       : `FY${String(year - 1).slice(2)}${String(year).slice(2)}`;
 
-  stageHistory: {
-    include: { changedBy: { select: { name: true } } },
-    orderBy: { createdAt: "desc" },
-  },
-};
+//   const last = await tx.deal.findFirst({
+//     where: { dealLogId: { startsWith: fy } },
+//     orderBy: { dealLogId: "desc" },
+//     select: { dealLogId: true },
+//   });
 
-/* =========================================================
-   GET ALL DEALS
-========================================================= */
-export const getDeals = asyncHandler(async (req, res) => {
-  const deals = await prisma.deal.findMany({
-    include: dealInclude,
-    orderBy: { createdAt: "desc" },
-  });
+//   let number = 1000;
 
-  res.json({ success: true, data: deals });
-});
+//   if (last?.dealLogId) {
+//     number = parseInt(last.dealLogId.split(".")[1]) + 1;
+//   }
 
-/* =========================================================
-   GET SINGLE DEAL
-========================================================= */
-export const getDeal = asyncHandler(async (req, res) => {
-  const deal = await prisma.deal.findUnique({
-    where: { id: req.params.id },
-    include: {
-      ...dealInclude,
-      stageHistory: {
-        include: {
-          changedBy: { select: { name: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      },
-    },
-  });
+//   return `${fy}.${number}`;
+// };
 
-  if (!deal) throw new ApiError(404, "Deal not found");
+// /* =========================================================
+//    COMMON INCLUDE (for frontend)
+// ========================================================= */
+// // const dealInclude = {
+// //   account: { select: { id: true, accountName: true } },
+// //   contact: { select: { id: true, firstName: true, lastName: true } },
+// //   owner: { select: { id: true, name: true } },
+// //   createdBy: { select: { name: true } },
+// //   modifiedBy: { select: { name: true } },
+// // };
 
-  res.json({ success: true, data: deal });
-});
+// const dealInclude = {
+//   account: { select: { id: true, accountName: true } },
 
-/* =========================================================
-   CREATE DEAL
-========================================================= */
-export const createDeal = asyncHandler(async (req, res) => {
-  const result = await prisma.$transaction(async (tx) => {
-    const dealLogId = await generateDealLogId(tx);
+//   contact: {
+//     select: {
+//       id: true,
+//       firstName: true,
+//       lastName: true,
+//       email: true,
+//     },
+//   },
 
-    const deal = await tx.deal.create({
-      data: {
-        dealName: req.body.dealName,
-        stage: req.body.stage,
-        stageUpdatedAt: new Date(),
-        productGroup: req.body.productGroup || null,
-        weightage: req.body.weightage || null,
+//   owner: { select: { id: true, name: true } },
+//   createdBy: { select: { id: true, name: true } },
+//   modifiedBy: { select: { id: true, name: true } },
 
-        accountId: req.body.accountId,
-        contactId: req.body.contactId || null,
+//   stageHistory: {
+//     include: { changedBy: { select: { name: true } } },
+//     orderBy: { createdAt: "desc" },
+//   },
+// };
 
-        dealOwnerId: req.body.dealOwnerId || req.user.id,
+// /* =========================================================
+//    GET ALL DEALS
+// ========================================================= */
+// // export const getDeals = asyncHandler(async (req, res) => {
+// //   const deals = await prisma.deal.findMany({
+// //     include: dealInclude,
+// //     orderBy: { createdAt: "desc" },
+// //   });
 
-        closingDate: new Date(req.body.closingDate),
+// //   res.json({ success: true, data: deals });
+// // });
 
-        amount: req.body.amount ? parseFloat(req.body.amount) : null,
-        expectedRevenue: req.body.expectedRevenue
-          ? parseFloat(req.body.expectedRevenue)
-          : null,
+// export const getDeals = asyncHandler(async (req, res) => {
+//   const user = req.user;
 
-        probability: STAGE_PROBABILITY[req.body.stage] ?? null,
+//   let deals;
 
-        dealLogId,
+//   if (user.role === "ADMIN") {
+//     // ✅ Admin sees everything
+//     deals = await prisma.deal.findMany({
+//       include: dealInclude,
+//       orderBy: { createdAt: "desc" },
+//     });
+//   } else {
+//     // ✅ Manager / Sales → only assigned deals
+//     deals = await prisma.deal.findMany({
+//       where: {
+//         assignments: {
+//           some: {
+//             userId: user.id,
+//           },
+//         },
+//       },
+//       include: dealInclude,
+//       orderBy: { createdAt: "desc" },
+//     });
+//   }
 
-        createdById: req.user.id,
-        modifiedById: req.user.id,
-      },
-    });
+//   res.json({ success: true, data: deals });
+// });
 
-    await tx.dealStageHistory.create({
-      data: {
-        dealId: deal.id,
-        stage: deal.stage,
-        amount: deal.amount,
-        probability: deal.probability,
-        expectedRevenue: deal.expectedRevenue,
-        closingDate: deal.closingDate,
-        changedById: req.user.id,
-      },
-    });
+// /* =========================================================
+//    GET SINGLE DEAL
+// ========================================================= */
+// export const getDeal = asyncHandler(async (req, res) => {
+//   const deal = await prisma.deal.findUnique({
+//     where: { id: req.params.id },
+//     include: {
+//       ...dealInclude,
+//       stageHistory: {
+//         include: {
+//           changedBy: { select: { name: true } },
+//         },
+//         orderBy: { createdAt: "desc" },
+//       },
+//     },
+//   });
 
-    return tx.deal.findUnique({
-      where: { id: deal.id },
-      include: dealInclude,
-    });
-  });
+//   if (!deal) throw new ApiError(404, "Deal not found");
 
-  res.status(201).json({ success: true, data: result });
-});
+//   res.json({ success: true, data: deal });
+// });
+
+// /* =========================================================
+//    CREATE DEAL
+// ========================================================= */
+// export const createDeal = asyncHandler(async (req, res) => {
+//   const result = await prisma.$transaction(async (tx) => {
+//     const dealLogId = await generateDealLogId(tx);
+
+//     const deal = await tx.deal.create({
+//       data: {
+//         dealName: req.body.dealName,
+//         stage: req.body.stage,
+//         stageUpdatedAt: new Date(),
+//         productGroup: req.body.productGroup || null,
+//         weightage: req.body.weightage || null,
+
+//         accountId: req.body.accountId,
+//         contactId: req.body.contactId || null,
+
+//         dealOwnerId: req.body.dealOwnerId || req.user.id,
+
+//         closingDate: new Date(req.body.closingDate),
+
+//         amount: req.body.amount ? parseFloat(req.body.amount) : null,
+//         expectedRevenue: req.body.expectedRevenue
+//           ? parseFloat(req.body.expectedRevenue)
+//           : null,
+
+//         probability: STAGE_PROBABILITY[req.body.stage] ?? null,
+
+//         dealLogId,
+
+//         createdById: req.user.id,
+//         modifiedById: req.user.id,
+//       },
+//     });
+
+//     await tx.dealStageHistory.create({
+//       data: {
+//         dealId: deal.id,
+//         stage: deal.stage,
+//         amount: deal.amount,
+//         probability: deal.probability,
+//         expectedRevenue: deal.expectedRevenue,
+//         closingDate: deal.closingDate,
+//         changedById: req.user.id,
+//       },
+//     });
+
+//     return tx.deal.findUnique({
+//       where: { id: deal.id },
+//       include: dealInclude,
+//     });
+//   });
+
+//   res.status(201).json({ success: true, data: result });
+// });
+
+// // /* =========================================================
+// //    UPDATE DEAL + STAGE HISTORY
+// // ========================================================= */
+// // export const updateDeal = asyncHandler(async (req, res) => {
+// //   const existing = await prisma.deal.findUnique({
+// //     where: { id: req.params.id },
+// //   });
+
+// //   if (!existing) throw new ApiError(404, "Deal not found");
+
+// //   const result = await prisma.$transaction(async (tx) => {
+// //     const updated = await tx.deal.update({
+// //       where: { id: req.params.id },
+// //       data: {
+// //         dealName: req.body.dealName ?? existing.dealName,
+// //         stage: req.body.stage ?? existing.stage,
+// //         productGroup: req.body.productGroup ?? existing.productGroup,
+// //         weightage: req.body.weightage ?? existing.weightage,
+
+// //         accountId: req.body.accountId ?? existing.accountId,
+// //         contactId: req.body.contactId ?? existing.contactId,
+
+// //         closingDate: req.body.closingDate
+// //           ? new Date(req.body.closingDate)
+// //           : existing.closingDate,
+
+// //         amount:
+// //           req.body.amount !== undefined
+// //             ? req.body.amount
+// //               ? parseFloat(req.body.amount)
+// //               : null
+// //             : existing.amount,
+
+// //         expectedRevenue:
+// //           req.body.expectedRevenue !== undefined
+// //             ? req.body.expectedRevenue
+// //               ? parseFloat(req.body.expectedRevenue)
+// //               : null
+// //             : existing.expectedRevenue,
+
+// //         probability: req.body.stage
+// //           ? STAGE_PROBABILITY[req.body.stage]
+// //           : existing.probability,
+
+// //         modifiedById: req.user.id,
+// //       },
+// //     });
+
+// //     /* 🔥 stage changed → history */
+// //     if (req.body.stage && req.body.stage !== existing.stage) {
+// //       await tx.dealStageHistory.create({
+// //         data: {
+// //           dealId: updated.id,
+// //           stage: updated.stage,
+// //           amount: updated.amount,
+// //           probability: updated.probability,
+// //           expectedRevenue: updated.expectedRevenue,
+// //           closingDate: updated.closingDate,
+// //           changedById: req.user.id,
+// //         },
+// //       });
+// //     }
+
+// //     return tx.deal.findUnique({
+// //       where: { id: updated.id },
+// //       include: dealInclude,
+// //     });
+// //   });
+
+// //   res.json({ success: true, data: result });
+// // });
 
 // /* =========================================================
 //    UPDATE DEAL + STAGE HISTORY
@@ -393,11 +494,31 @@ export const createDeal = asyncHandler(async (req, res) => {
 //   const result = await prisma.$transaction(async (tx) => {
 //     const updated = await tx.deal.update({
 //       where: { id: req.params.id },
+
 //       data: {
 //         dealName: req.body.dealName ?? existing.dealName,
+
 //         stage: req.body.stage ?? existing.stage,
-//         productGroup: req.body.productGroup ?? existing.productGroup,
-//         weightage: req.body.weightage ?? existing.weightage,
+
+//         stageUpdatedAt:
+//           req.body.stage && req.body.stage !== existing.stage
+//             ? new Date()
+//             : existing.stageUpdatedAt,
+
+//         productGroup:
+//           req.body.productGroup !== undefined
+//             ? req.body.productGroup
+//             : existing.productGroup,
+
+//         weightage:
+//           req.body.weightage !== undefined
+//             ? req.body.weightage
+//             : existing.weightage,
+
+//         personInCharge:
+//           req.body.personInCharge !== undefined
+//             ? req.body.personInCharge
+//             : existing.personInCharge,
 
 //         accountId: req.body.accountId ?? existing.accountId,
 //         contactId: req.body.contactId ?? existing.contactId,
@@ -428,7 +549,7 @@ export const createDeal = asyncHandler(async (req, res) => {
 //       },
 //     });
 
-//     /* 🔥 stage changed → history */
+//     /* 🔥 STAGE CHANGED → CREATE HISTORY */
 //     if (req.body.stage && req.body.stage !== existing.stage) {
 //       await tx.dealStageHistory.create({
 //         data: {
@@ -451,11 +572,230 @@ export const createDeal = asyncHandler(async (req, res) => {
 
 //   res.json({ success: true, data: result });
 // });
+// /* =========================================================
+//    DELETE DEAL
+// ========================================================= */
+// export const deleteDeal = asyncHandler(async (req, res) => {
+//   await prisma.deal.delete({
+//     where: { id: req.params.id },
+//   });
+
+//   res.json({ success: true, message: "Deal deleted" });
+// });
+
+// src/controllers/deal.controller.js
+import prisma from "../utils/prisma.js";
+import { ApiError, asyncHandler } from "../utils/ApiError.js";
+/* =========================================================
+   STAGE → PROBABILITY MAP
+========================================================= */
+const STAGE_PROBABILITY = {
+  RFQ: 10,
+  VISIT_MEETING: 20,
+  PREVIEW: 30,
+  TECHNICAL_PROPOSAL: 40,
+  COMMERCIAL_PROPOSAL: 50,
+  REVIEW_FEEDBACK: 60,
+  MOVED_TO_PURCHASE: 75,
+  NEGOTIATION: 90,
+  CLOSED_WON: 100,
+  CLOSED_LOST: 0,
+  CLOSED_LOST_TO_COMPETITION: 0,
+  REGRETTED: 0,
+};
 
 /* =========================================================
-   UPDATE DEAL + STAGE HISTORY
+   COMMON INCLUDE
 ========================================================= */
+const dealInclude = {
+  account: { select: { id: true, accountName: true } },
+
+  contact: {
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+    },
+  },
+
+  owner: { select: { id: true, name: true } },
+  createdBy: { select: { id: true, name: true } },
+  modifiedBy: { select: { id: true, name: true } },
+
+  stageHistory: {
+    include: { changedBy: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+  },
+};
+
+/* =========================================================
+   GET ALL DEALS (FIXED)
+========================================================= */
+export const getDeals = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  let deals;
+
+  if (user.role === "ADMIN") {
+    deals = await prisma.deal.findMany({
+      include: dealInclude,
+      orderBy: { createdAt: "desc" },
+    });
+  } else {
+    // ✅ ONLY ASSIGNMENT BASED
+    deals = await prisma.deal.findMany({
+      where: {
+        assignments: {
+          some: {
+            userId: user.id,
+          },
+        },
+      },
+      include: dealInclude,
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  res.json({ success: true, data: deals });
+});
+
+/* =========================================================
+   GET SINGLE DEAL (FIXED)
+========================================================= */
+export const getDeal = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  const deal = await prisma.deal.findFirst({
+    where: {
+      id: req.params.id,
+
+      ...(user.role !== "ADMIN" && {
+        assignments: {
+          some: {
+            userId: user.id,
+          },
+        },
+      }),
+    },
+    include: dealInclude,
+  });
+
+  if (!deal) throw new ApiError(404, "Deal not found or not assigned");
+
+  res.json({ success: true, data: deal });
+});
+
+/* =========================================================
+   CREATE DEAL
+========================================================= */
+// export const createDeal = asyncHandler(async (req, res) => {
+//   const deal = await prisma.deal.create({
+//     data: {
+//       dealName: req.body.dealName,
+//       stage: req.body.stage,
+//       stageUpdatedAt: new Date(),
+
+//       accountId: req.body.accountId,
+//       contactId: req.body.contactId || null,
+
+//       dealOwnerId: req.user.id,
+
+//       closingDate: new Date(req.body.closingDate),
+
+//       amount: req.body.amount ? parseFloat(req.body.amount) : null,
+//       expectedRevenue: req.body.expectedRevenue
+//         ? parseFloat(req.body.expectedRevenue)
+//         : null,
+
+//       probability: STAGE_PROBABILITY[req.body.stage] ?? null,
+
+//       createdById: req.user.id,
+//       modifiedById: req.user.id,
+//     },
+//     include: dealInclude,
+//   });
+
+//   res.status(201).json({ success: true, data: deal });
+// });
+
+export const createDeal = asyncHandler(async (req, res) => {
+  const result = await prisma.$transaction(async (tx) => {
+    // 🔥 1️⃣ Generate dealLogId (SAFE)
+    const count = await tx.deal.count();
+    const dealLogId = `DEAL-${String(count + 1).padStart(6, "0")}`;
+
+    // 2️⃣ Create deal
+    const deal = await tx.deal.create({
+      data: {
+        dealName: req.body.dealName,
+        stage: req.body.stage,
+        stageUpdatedAt: new Date(),
+
+        accountId: req.body.accountId,
+        contactId: req.body.contactId || null,
+
+        dealOwnerId: req.user.id,
+
+        closingDate: new Date(req.body.closingDate),
+
+        amount: req.body.amount ? parseFloat(req.body.amount) : null,
+        expectedRevenue: req.body.expectedRevenue
+          ? parseFloat(req.body.expectedRevenue)
+          : null,
+
+        probability: STAGE_PROBABILITY[req.body.stage] ?? null,
+
+        dealLogId, // ✅ FIXED (IMPORTANT)
+
+        createdById: req.user.id,
+        modifiedById: req.user.id,
+      },
+    });
+
+    // 🔥 3️⃣ CREATE ASSIGNMENT (VERY IMPORTANT)
+    await tx.dealAssignment.create({
+      data: {
+        dealId: deal.id,
+        userId: req.user.id,
+      },
+    });
+
+    // 4️⃣ Return full data
+    return tx.deal.findUnique({
+      where: { id: deal.id },
+      include: dealInclude,
+    });
+  });
+
+  res.status(201).json({ success: true, data: result });
+});
+
+/* =========================================================
+   UPDATE DEAL
+========================================================= */
+// export const updateDeal = asyncHandler(async (req, res) => {
+//   const existing = await prisma.deal.findUnique({
+//     where: { id: req.params.id },
+//   });
+
+//   if (!existing) throw new ApiError(404, "Deal not found");
+
+//   const deal = await prisma.deal.update({
+//     where: { id: req.params.id },
+//     data: {
+//       ...req.body,
+//       modifiedById: req.user.id,
+//     },
+//     include: dealInclude,
+//   });
+
+//   res.json({ success: true, data: deal });
+// });
+
 export const updateDeal = asyncHandler(async (req, res) => {
+  const { stage, description, ...rest } = req.body;
+
   const existing = await prisma.deal.findUnique({
     where: { id: req.params.id },
   });
@@ -463,86 +803,51 @@ export const updateDeal = asyncHandler(async (req, res) => {
   if (!existing) throw new ApiError(404, "Deal not found");
 
   const result = await prisma.$transaction(async (tx) => {
-    const updated = await tx.deal.update({
+    // ✅ 1. Update deal
+    const updatedDeal = await tx.deal.update({
       where: { id: req.params.id },
-
       data: {
-        dealName: req.body.dealName ?? existing.dealName,
-
-        stage: req.body.stage ?? existing.stage,
-
-        stageUpdatedAt:
-          req.body.stage && req.body.stage !== existing.stage
-            ? new Date()
-            : existing.stageUpdatedAt,
-
-        productGroup:
-          req.body.productGroup !== undefined
-            ? req.body.productGroup
-            : existing.productGroup,
-
-        weightage:
-          req.body.weightage !== undefined
-            ? req.body.weightage
-            : existing.weightage,
-
-        personInCharge:
-          req.body.personInCharge !== undefined
-            ? req.body.personInCharge
-            : existing.personInCharge,
-
-        accountId: req.body.accountId ?? existing.accountId,
-        contactId: req.body.contactId ?? existing.contactId,
-
-        closingDate: req.body.closingDate
-          ? new Date(req.body.closingDate)
-          : existing.closingDate,
-
-        amount:
-          req.body.amount !== undefined
-            ? req.body.amount
-              ? parseFloat(req.body.amount)
-              : null
-            : existing.amount,
-
-        expectedRevenue:
-          req.body.expectedRevenue !== undefined
-            ? req.body.expectedRevenue
-              ? parseFloat(req.body.expectedRevenue)
-              : null
-            : existing.expectedRevenue,
-
-        probability: req.body.stage
-          ? STAGE_PROBABILITY[req.body.stage]
-          : existing.probability,
-
+        ...rest,
+        ...(stage && {
+          stage,
+          stageUpdatedAt: new Date(),
+          probability: STAGE_PROBABILITY[stage] ?? existing.probability,
+        }),
         modifiedById: req.user.id,
       },
     });
 
-    /* 🔥 STAGE CHANGED → CREATE HISTORY */
-    if (req.body.stage && req.body.stage !== existing.stage) {
+    // ✅ 2. If stage changed → create history
+    if (stage && stage !== existing.stage) {
       await tx.dealStageHistory.create({
         data: {
-          dealId: updated.id,
-          stage: updated.stage,
-          amount: updated.amount,
-          probability: updated.probability,
-          expectedRevenue: updated.expectedRevenue,
-          closingDate: updated.closingDate,
+          dealId: existing.id,
+          stage,
+
+          // 🔥 snapshot fields
+          amount: updatedDeal.amount,
+          probability: updatedDeal.probability,
+          expectedRevenue: updatedDeal.expectedRevenue,
+          closingDate: updatedDeal.closingDate,
+
+          // ✅ NEW FIELD
+          description: description || null,
+
           changedById: req.user.id,
         },
       });
     }
 
+    // ✅ 3. Return full deal
     return tx.deal.findUnique({
-      where: { id: updated.id },
+      where: { id: existing.id },
       include: dealInclude,
     });
   });
 
   res.json({ success: true, data: result });
 });
+
 /* =========================================================
    DELETE DEAL
 ========================================================= */
@@ -552,4 +857,20 @@ export const deleteDeal = asyncHandler(async (req, res) => {
   });
 
   res.json({ success: true, message: "Deal deleted" });
+});
+
+/* =========================================================
+   UPDATE DEAL DETAIL
+========================================================= */
+
+export const updateStageHistoryNote = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { description } = req.body;
+
+  const updated = await prisma.dealStageHistory.update({
+    where: { id },
+    data: { description },
+  });
+
+  res.json({ success: true, data: updated });
 });

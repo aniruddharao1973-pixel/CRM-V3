@@ -485,6 +485,7 @@ const initialForm = {
   website: "",
   ownership: "",
   image: "",
+  lifecycle: "PROSPECT",
   billingStreet: "",
   billingCity: "",
   billingState: "",
@@ -519,13 +520,7 @@ const FormSection = ({ title, subtitle, icon: Icon, children }) => (
   </div>
 );
 
-const FormField = ({
-  label,
-  required,
-  children,
-  className = "",
-  hint,
-}) => (
+const FormField = ({ label, required, children, className = "", hint }) => (
   <div className={className}>
     <label className="block text-sm font-medium text-gray-700 mb-1.5">
       {label}
@@ -569,14 +564,7 @@ const Input = ({
   </div>
 );
 
-const Select = ({
-  name,
-  value,
-  onChange,
-  options,
-  placeholder,
-  required,
-}) => (
+const Select = ({ name, value, onChange, options, placeholder, required }) => (
   <select
     name={name}
     value={value}
@@ -637,7 +625,14 @@ const AccountForm = () => {
         shippingCountry: prev.billingCountry,
       }));
     }
-  }, [copyBilling, form.billingStreet, form.billingCity, form.billingState, form.billingPincode, form.billingCountry]);
+  }, [
+    copyBilling,
+    form.billingStreet,
+    form.billingCity,
+    form.billingState,
+    form.billingPincode,
+    form.billingCountry,
+  ]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -807,6 +802,21 @@ const AccountForm = () => {
                 onChange={handleChange}
                 placeholder="Select rating"
                 options={ACCOUNT_RATINGS.map((r) => ({ value: r, label: r }))}
+              />
+            </FormField>
+
+            <FormField label="Account Status">
+              <Select
+                name="lifecycle"
+                value={form.lifecycle}
+                onChange={handleChange}
+                placeholder="Select status"
+                options={[
+                  { value: "ACTIVE", label: "Active" },
+                  { value: "INACTIVE", label: "Inactive" },
+                  { value: "PROSPECT", label: "Prospect" },
+                  { value: "DEACTIVATED", label: "Deactivated" },
+                ]}
               />
             </FormField>
           </div>

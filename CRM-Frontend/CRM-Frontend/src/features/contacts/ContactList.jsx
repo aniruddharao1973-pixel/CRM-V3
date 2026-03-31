@@ -363,6 +363,10 @@ const ContactList = () => {
   const navigate = useNavigate();
   const { contacts, pagination, loading } = useSelector((s) => s.contacts);
 
+  const { user } = useSelector((state) => state.auth);
+
+  const canDelete = user?.role === "ADMIN" || user?.role === "MANAGER";
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [deleting, setDeleting] = useState(false);
@@ -840,19 +844,21 @@ const ContactList = () => {
                             >
                               <PencilSquareIcon className="w-4 h-4" />
                             </button>
-                            <button
-                              onClick={() =>
-                                setDeleteModal({
-                                  open: true,
-                                  id: contact.id,
-                                  name: `${contact.firstName} ${contact.lastName}`,
-                                })
-                              }
-                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                              title="Delete Contact"
-                            >
-                              <TrashIcon className="w-4 h-4" />
-                            </button>
+                            {canDelete && (
+                              <button
+                                onClick={() =>
+                                  setDeleteModal({
+                                    open: true,
+                                    id: contact.id,
+                                    name: `${contact.firstName} ${contact.lastName}`,
+                                  })
+                                }
+                                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                title="Delete Contact"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -976,18 +982,20 @@ const ContactList = () => {
                         >
                           <PencilSquareIcon className="w-5 h-5" />
                         </button>
-                        <button
-                          onClick={() =>
-                            setDeleteModal({
-                              open: true,
-                              id: contact.id,
-                              name: `${contact.firstName} ${contact.lastName}`,
-                            })
-                          }
-                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <TrashIcon className="w-5 h-5" />
-                        </button>
+                        {canDelete && (
+                          <button
+                            onClick={() =>
+                              setDeleteModal({
+                                open: true,
+                                id: contact.id,
+                                name: `${contact.firstName} ${contact.lastName}`,
+                              })
+                            }
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          >
+                            <TrashIcon className="w-5 h-5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

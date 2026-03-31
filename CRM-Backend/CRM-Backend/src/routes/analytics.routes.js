@@ -41,6 +41,7 @@ import {
   getStageDeals,
   getKpiMetrics,
   getDealMomentumAnalytics,
+  getOverdueDeals,
 } from "../controllers/analytics.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 
@@ -63,4 +64,5 @@ router.get("/risk-deals", getRiskDeals);
 router.get("/stage-deals", getStageDeals);
 router.get("/kpi-metrics", getKpiMetrics);
 router.get("/deal-momentum", getDealMomentumAnalytics);
+router.get("/overdue-deals", getOverdueDeals);
 export default router;

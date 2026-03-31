@@ -285,6 +285,20 @@ export const fetchDealMomentum = createAsyncThunk(
     }
   },
 );
+
+export const fetchOverdueDeals = createAsyncThunk(
+  "analytics/overdueDeals",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await API.get("/analytics/overdue-deals");
+      return data.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch overdue deals",
+      );
+    }
+  },
+);
 /* ============================================================
     SLICE
   ============================================================ */
@@ -298,20 +312,19 @@ const analyticsSlice = createSlice({
     topPerformers: [],
     dealsBySource: [],
     dealsByIndustry: [],
+    overdueDeals: [],
     recentActivities: null,
 
     dealMomentum: [],
     // dealMomentumCount: 0,
     dealMomentumLoading: false,
+    overdueDealsLoading: false,
 
     /* NEW */
     kpis: {
       conversionRate: 0,
       revenueWon: 0,
-      winLossRatio: {
-        won: 0,
-        lost: 0,
-      },
+      overdueDealsPercent: 0, // ✅ NEW
       revenueRealizationRate: 0,
 
       calculation: {
@@ -320,6 +333,9 @@ const analyticsSlice = createSlice({
         closedDeals: 0,
         revenueWon: 0,
         revenueLost: 0,
+
+        totalActiveDeals: 0, // ✅ NEW
+        overdueDeals: 0, // ✅ NEW
       },
     },
 
@@ -401,6 +417,19 @@ const analyticsSlice = createSlice({
 
       .addCase(fetchDealMomentum.rejected, (state, action) => {
         state.dealMomentumLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchOverdueDeals.pending, (state) => {
+        state.overdueDealsLoading = true;
+      })
+
+      .addCase(fetchOverdueDeals.fulfilled, (state, action) => {
+        state.overdueDealsLoading = false;
+        state.overdueDeals = action.payload;
+      })
+
+      .addCase(fetchOverdueDeals.rejected, (state, action) => {
+        state.overdueDealsLoading = false;
         state.error = action.payload;
       });
   },

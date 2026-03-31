@@ -72,10 +72,305 @@
 // export default Sidebar;
 // src/components/Sidebar.jsx
 
+// // src/components/Sidebar.jsx
+// import { useState, useEffect, useCallback } from "react";
+// import { useSelector } from "react-redux";
+// import { NavLink, useLocation } from "react-router-dom";
+// import {
+//   LayoutDashboard,
+//   Building2,
+//   Users,
+//   IndianRupee,
+//   CheckSquare,
+//   ChevronLeft,
+//   ChevronRight,
+//   X,
+//   BarChart3,
+//   CalendarDays,
+// } from "lucide-react";
+
+// function MenuItem({ item, onNavigate, isMobile = false, collapsed, isActive }) {
+//   const active = isActive(item.to);
+//   const showCollapsed = collapsed && !isMobile;
+
+//   return (
+//     <NavLink to={item.to} onClick={onNavigate} className="block">
+//       <div className="relative">
+//         {active && !showCollapsed && (
+//           <div
+//             className="absolute -top-[20px] right-0 w-[20px] h-[20px] pointer-events-none z-10"
+//             style={{
+//               background:
+//                 "radial-gradient(circle at top left, transparent 20px, white 20px)",
+//             }}
+//           />
+//         )}
+
+//         <div
+//           className={`
+//             group relative flex items-center
+//             ${showCollapsed ? "justify-center mx-2 px-0" : "gap-3 pl-6 pr-4"}
+//             py-3 transition-all duration-300 ease-in-out
+//             ${
+//               active
+//                 ? showCollapsed
+//                   ? "bg-white text-[#3B2E7E] rounded-xl font-semibold shadow-md"
+//                   : "bg-white text-[#3B2E7E] rounded-l-full font-semibold shadow-md"
+//                 : "text-white/80 hover:bg-white/10 hover:text-white"
+//             }
+//           `}
+//         >
+//           <item.icon
+//             className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 ${
+//               active ? "scale-110" : "group-hover:scale-105"
+//             }`}
+//           />
+
+//           {!showCollapsed && (
+//             <span className="text-sm font-medium transition-opacity duration-200">
+//               {item.name}
+//             </span>
+//           )}
+
+//           {showCollapsed && (
+//             <span className="absolute left-full ml-3 bg-[#2A1F5C] text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap z-[60] pointer-events-none shadow-lg transition-opacity duration-200">
+//               {item.name}
+//             </span>
+//           )}
+//         </div>
+
+//         {active && !showCollapsed && (
+//           <div
+//             className="absolute -bottom-[20px] right-0 w-[20px] h-[20px] pointer-events-none z-10"
+//             style={{
+//               background:
+//                 "radial-gradient(circle at bottom left, transparent 20px, white 20px)",
+//             }}
+//           />
+//         )}
+//       </div>
+//     </NavLink>
+//   );
+// }
+
+// function BrandSection({ isCollapsed }) {
+//   return (
+//     <div
+//       className={`flex items-center ${
+//         isCollapsed ? "justify-center" : "gap-3"
+//       } px-4 py-6 transition-all duration-300`}
+//     >
+//       <div
+//         className={`overflow-hidden transition-all duration-300 ease-in-out ${
+//           isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+//         }`}
+//       >
+//         <h1 className="font-semibold text-lg whitespace-nowrap">
+//           FactEyes CRM
+//         </h1>
+//       </div>
+//     </div>
+//   );
+// }
+
+// function SidebarContent({
+//   menu,
+//   isMobile = false,
+//   collapsed,
+//   setCollapsed,
+//   onClose,
+//   isActive,
+// }) {
+//   const isCollapsed = collapsed && !isMobile;
+
+//   return (
+//     <>
+//       <div
+//         className={`flex items-center ${isMobile ? "justify-between" : ""} p-2`}
+//       >
+//         <BrandSection isCollapsed={isCollapsed} />
+//         {isMobile && (
+//           <button
+//             onClick={onClose}
+//             className="bg-white/10 p-2 rounded-xl hover:bg-white/20 active:scale-95 transition-all duration-200 flex-shrink-0 mr-2"
+//             aria-label="Close menu"
+//           >
+//             <X size={18} />
+//           </button>
+//         )}
+//       </div>
+
+//       <div className="mx-3 mb-2 border-t border-white/10" />
+
+//       <div className="flex-1 space-y-1 mt-2 overflow-y-auto overflow-x-hidden overscroll-contain">
+//         {menu.map((item) => (
+//           <MenuItem
+//             key={item.name}
+//             item={item}
+//             isMobile={isMobile}
+//             collapsed={collapsed}
+//             isActive={isActive}
+//             onNavigate={isMobile ? onClose : undefined}
+//           />
+//         ))}
+//       </div>
+
+//       {isMobile ? (
+//         <div className="p-4 border-t border-white/10">
+//           <p className="text-white/40 text-xs text-center">© 2025 SalesCRM</p>
+//         </div>
+//       ) : (
+//         <div className="flex justify-center py-4 border-t border-white/10">
+//           <button
+//             onClick={() => setCollapsed(!collapsed)}
+//             className="bg-white/10 p-2.5 rounded-xl hover:bg-white/20 active:scale-95 transition-all duration-200"
+//             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+//           >
+//             <div className="transition-transform duration-300">
+//               {collapsed ? (
+//                 <ChevronRight size={18} />
+//               ) : (
+//                 <ChevronLeft size={18} />
+//               )}
+//             </div>
+//           </button>
+//         </div>
+//       )}
+//     </>
+//   );
+// }
+
+// export default function Sidebar({ mobileOpen = false, onClose }) {
+//   const location = useLocation();
+//   const [collapsed, setCollapsed] = useState(false);
+//   const { user } = useSelector((state) => state.auth);
+
+//   const menu = [
+//     { name: "Dashboard", to: "/", icon: LayoutDashboard },
+//     { name: "Accounts", to: "/accounts", icon: Building2 },
+//     { name: "Contacts", to: "/contacts", icon: Users },
+//     { name: "Deals", to: "/deals", icon: IndianRupee },
+//     { name: "Tasks", to: "/tasks", icon: CheckSquare },
+
+//     // ✅ ADD THIS
+//     { name: "Calendar", to: "/calendar", icon: CalendarDays },
+
+//     ...(user?.role === "ADMIN"
+//       ? [{ name: "Users", to: "/users", icon: Users }]
+//       : []),
+
+//     {
+//       name: "Advanced Analytics",
+//       to: "/analytics/advanced",
+//       icon: BarChart3,
+//       badge: "NEW",
+//     },
+//   ];
+
+//   const isActive = useCallback(
+//     (path) => location.pathname === path,
+//     [location.pathname],
+//   );
+
+//   useEffect(() => {
+//     onClose?.();
+//   }, [location.pathname]);
+
+//   useEffect(() => {
+//     if (mobileOpen) {
+//       document.body.style.overflow = "hidden";
+//     } else {
+//       document.body.style.overflow = "";
+//     }
+//     return () => {
+//       document.body.style.overflow = "";
+//     };
+//   }, [mobileOpen]);
+
+//   useEffect(() => {
+//     const handleEsc = (e) => {
+//       if (e.key === "Escape") onClose?.();
+//     };
+//     window.addEventListener("keydown", handleEsc);
+//     return () => window.removeEventListener("keydown", handleEsc);
+//   }, [onClose]);
+
+//   useEffect(() => {
+//     const handleResize = () => {
+//       if (window.innerWidth >= 1024) {
+//         onClose?.();
+//       }
+//     };
+//     window.addEventListener("resize", handleResize);
+//     return () => window.removeEventListener("resize", handleResize);
+//   }, [onClose]);
+
+//   return (
+//     <>
+//       <div
+//         className={`
+//           lg:hidden fixed inset-0 z-[48]
+//           transition-opacity duration-300 ease-in-out
+//           ${
+//             mobileOpen
+//               ? "opacity-100 pointer-events-auto"
+//               : "opacity-0 pointer-events-none"
+//           }
+//         `}
+//         onClick={onClose}
+//         aria-hidden="true"
+//       >
+//         <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
+//       </div>
+
+//       <aside
+//         className={`
+//           lg:hidden fixed top-0 left-0 h-full w-[280px] z-[50]
+//           bg-gradient-to-b from-[#3B2E7E] to-[#2A1F5C] text-white
+//           flex flex-col shadow-2xl
+//           transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+//           will-change-transform
+//           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+//         `}
+//       >
+//         <SidebarContent
+//           menu={menu}
+//           isMobile={true}
+//           collapsed={collapsed}
+//           setCollapsed={setCollapsed}
+//           onClose={onClose}
+//           isActive={isActive}
+//         />
+//       </aside>
+
+//       <aside
+//         className={`
+//           hidden lg:flex flex-col h-screen
+//           bg-gradient-to-b from-[#3B2E7E] to-[#2A1F5C] text-white
+//           transition-all duration-300 ease-in-out flex-shrink-0
+//           will-change-[width]
+//           ${collapsed ? "w-[72px]" : "w-[250px]"}
+//         `}
+//       >
+//         <SidebarContent
+//           menu={menu}
+//           isMobile={false}
+//           collapsed={collapsed}
+//           setCollapsed={setCollapsed}
+//           onClose={onClose}
+//           isActive={isActive}
+//         />
+//       </aside>
+//     </>
+//   );
+// }
+
 // src/components/Sidebar.jsx
 import { useState, useEffect, useCallback } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { NavLink, useLocation } from "react-router-dom";
+import { fetchAssignments } from "../features/assign/assignmentSlice";
+import AssignmentGrid from "../features/assign/AssignmentGrid";
 import {
   LayoutDashboard,
   Building2,
@@ -89,81 +384,100 @@ import {
   CalendarDays,
 } from "lucide-react";
 
-function MenuItem({ item, onNavigate, isMobile = false, collapsed, isActive }) {
-  const active = isActive(item.to);
+/* ================= MENU ITEM ================= */
+function MenuItem({
+  item,
+  onNavigate,
+  onAction,
+  isMobile = false,
+  collapsed,
+  isActive,
+}) {
+  const active = item.to ? isActive(item.to) : false;
   const showCollapsed = collapsed && !isMobile;
 
-  return (
-    <NavLink to={item.to} onClick={onNavigate} className="block">
-      <div className="relative">
-        {active && !showCollapsed && (
-          <div
-            className="absolute -top-[20px] right-0 w-[20px] h-[20px] pointer-events-none z-10"
-            style={{
-              background:
-                "radial-gradient(circle at top left, transparent 20px, white 20px)",
-            }}
-          />
+  const handleClick = () => {
+    if (item.action && onAction) {
+      onAction(item.action);
+    } else if (onNavigate) {
+      onNavigate();
+    }
+  };
+
+  const content = (
+    <div className="relative">
+      {active && !showCollapsed && (
+        <div
+          className="absolute -top-[20px] right-0 w-[20px] h-[20px]"
+          style={{
+            background:
+              "radial-gradient(circle at top left, transparent 20px, white 20px)",
+          }}
+        />
+      )}
+
+      <div
+        className={`
+          group relative flex items-center
+          ${showCollapsed ? "justify-center mx-2 px-0" : "gap-3 pl-6 pr-4"}
+          py-3 transition-all duration-300
+          ${
+            active
+              ? showCollapsed
+                ? "bg-white text-[#3B2E7E] rounded-xl shadow-md"
+                : "bg-white text-[#3B2E7E] rounded-l-full shadow-md"
+              : "text-white/80 hover:bg-white/10 hover:text-white"
+          }
+        `}
+      >
+        <item.icon className="w-5 h-5 flex-shrink-0" />
+
+        {!showCollapsed && (
+          <span className="text-sm font-medium">{item.name}</span>
         )}
 
-        <div
-          className={`
-            group relative flex items-center
-            ${showCollapsed ? "justify-center mx-2 px-0" : "gap-3 pl-6 pr-4"}
-            py-3 transition-all duration-300 ease-in-out
-            ${
-              active
-                ? showCollapsed
-                  ? "bg-white text-[#3B2E7E] rounded-xl font-semibold shadow-md"
-                  : "bg-white text-[#3B2E7E] rounded-l-full font-semibold shadow-md"
-                : "text-white/80 hover:bg-white/10 hover:text-white"
-            }
-          `}
-        >
-          <item.icon
-            className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 ${
-              active ? "scale-110" : "group-hover:scale-105"
-            }`}
-          />
-
-          {!showCollapsed && (
-            <span className="text-sm font-medium transition-opacity duration-200">
-              {item.name}
-            </span>
-          )}
-
-          {showCollapsed && (
-            <span className="absolute left-full ml-3 bg-[#2A1F5C] text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap z-[60] pointer-events-none shadow-lg transition-opacity duration-200">
-              {item.name}
-            </span>
-          )}
-        </div>
-
-        {active && !showCollapsed && (
-          <div
-            className="absolute -bottom-[20px] right-0 w-[20px] h-[20px] pointer-events-none z-10"
-            style={{
-              background:
-                "radial-gradient(circle at bottom left, transparent 20px, white 20px)",
-            }}
-          />
+        {showCollapsed && (
+          <span className="absolute left-full ml-3 bg-[#2A1F5C] text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap z-[60]">
+            {item.name}
+          </span>
         )}
       </div>
-    </NavLink>
+
+      {active && !showCollapsed && (
+        <div
+          className="absolute -bottom-[20px] right-0 w-[20px] h-[20px]"
+          style={{
+            background:
+              "radial-gradient(circle at bottom left, transparent 20px, white 20px)",
+          }}
+        />
+      )}
+    </div>
+  );
+
+  if (item.to) {
+    return (
+      <NavLink to={item.to} onClick={handleClick} className="block">
+        {content}
+      </NavLink>
+    );
+  }
+
+  return (
+    <button onClick={handleClick} className="block w-full text-left">
+      {content}
+    </button>
   );
 }
 
+/* ================= BRAND ================= */
 function BrandSection({ isCollapsed }) {
   return (
     <div
-      className={`flex items-center ${
-        isCollapsed ? "justify-center" : "gap-3"
-      } px-4 py-6 transition-all duration-300`}
+      className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"} px-4 py-6`}
     >
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-        }`}
+        className={`${isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"} transition-all`}
       >
         <h1 className="font-semibold text-lg whitespace-nowrap">
           FactEyes CRM
@@ -173,13 +487,15 @@ function BrandSection({ isCollapsed }) {
   );
 }
 
+/* ================= SIDEBAR CONTENT ================= */
 function SidebarContent({
   menu,
-  isMobile = false,
+  isMobile,
   collapsed,
   setCollapsed,
   onClose,
   isActive,
+  onAction,
 }) {
   const isCollapsed = collapsed && !isMobile;
 
@@ -190,11 +506,7 @@ function SidebarContent({
       >
         <BrandSection isCollapsed={isCollapsed} />
         {isMobile && (
-          <button
-            onClick={onClose}
-            className="bg-white/10 p-2 rounded-xl hover:bg-white/20 active:scale-95 transition-all duration-200 flex-shrink-0 mr-2"
-            aria-label="Close menu"
-          >
+          <button onClick={onClose} className="bg-white/10 p-2 rounded-xl">
             <X size={18} />
           </button>
         )}
@@ -202,7 +514,7 @@ function SidebarContent({
 
       <div className="mx-3 mb-2 border-t border-white/10" />
 
-      <div className="flex-1 space-y-1 mt-2 overflow-y-auto overflow-x-hidden overscroll-contain">
+      <div className="flex-1 space-y-1 mt-2 overflow-y-auto">
         {menu.map((item) => (
           <MenuItem
             key={item.name}
@@ -211,28 +523,18 @@ function SidebarContent({
             collapsed={collapsed}
             isActive={isActive}
             onNavigate={isMobile ? onClose : undefined}
+            onAction={onAction}
           />
         ))}
       </div>
 
-      {isMobile ? (
-        <div className="p-4 border-t border-white/10">
-          <p className="text-white/40 text-xs text-center">© 2025 SalesCRM</p>
-        </div>
-      ) : (
+      {!isMobile && (
         <div className="flex justify-center py-4 border-t border-white/10">
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="bg-white/10 p-2.5 rounded-xl hover:bg-white/20 active:scale-95 transition-all duration-200"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="bg-white/10 p-2.5 rounded-xl"
           >
-            <div className="transition-transform duration-300">
-              {collapsed ? (
-                <ChevronRight size={18} />
-              ) : (
-                <ChevronLeft size={18} />
-              )}
-            </div>
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
         </div>
       )}
@@ -240,10 +542,14 @@ function SidebarContent({
   );
 }
 
+/* ================= MAIN SIDEBAR ================= */
 export default function Sidebar({ mobileOpen = false, onClose }) {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
   const { user } = useSelector((state) => state.auth);
+
+  const [collapsed, setCollapsed] = useState(false);
+  const [showAssignments, setShowAssignments] = useState(false);
+  const [activeTab, setActiveTab] = useState("deal");
 
   const menu = [
     { name: "Dashboard", to: "/", icon: LayoutDashboard },
@@ -251,20 +557,16 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
     { name: "Contacts", to: "/contacts", icon: Users },
     { name: "Deals", to: "/deals", icon: IndianRupee },
     { name: "Tasks", to: "/tasks", icon: CheckSquare },
-
-    // ✅ ADD THIS
     { name: "Calendar", to: "/calendar", icon: CalendarDays },
 
     ...(user?.role === "ADMIN"
-      ? [{ name: "Users", to: "/users", icon: Users }]
+      ? [
+          { name: "Users", to: "/users", icon: Users },
+          { name: "Access Management", action: "openAssignments", icon: CheckSquare },
+        ]
       : []),
 
-    {
-      name: "Advanced Analytics",
-      to: "/analytics/advanced",
-      icon: BarChart3,
-      badge: "NEW",
-    },
+    { name: "Advanced Analytics", to: "/analytics/advanced", icon: BarChart3 },
   ];
 
   const isActive = useCallback(
@@ -272,95 +574,99 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
     [location.pathname],
   );
 
-  useEffect(() => {
-    onClose?.();
-  }, [location.pathname]);
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+  const handleAction = (action) => {
+    if (action === "openAssignments") {
+      setShowAssignments(true);
+
+      // 🔥 preload deals by default
+      dispatch(fetchAssignments("deal"));
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
-
-  useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape") onClose?.();
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [onClose]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        onClose?.();
-      }
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [onClose]);
+  };
+  useEffect(() => onClose?.(), [location.pathname]);
 
   return (
     <>
-      <div
-        className={`
-          lg:hidden fixed inset-0 z-[48]
-          transition-opacity duration-300 ease-in-out
-          ${
-            mobileOpen
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-          }
-        `}
-        onClick={onClose}
-        aria-hidden="true"
-      >
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
-      </div>
-
+      {/* MOBILE */}
       <aside
-        className={`
-          lg:hidden fixed top-0 left-0 h-full w-[280px] z-[50]
-          bg-gradient-to-b from-[#3B2E7E] to-[#2A1F5C] text-white
-          flex flex-col shadow-2xl
-          transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
-          will-change-transform
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
+        className={`lg:hidden fixed top-0 left-0 h-full w-[280px] z-[50] bg-gradient-to-b from-[#3B2E7E] to-[#2A1F5C] text-white ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <SidebarContent
           menu={menu}
-          isMobile={true}
+          isMobile
           collapsed={collapsed}
           setCollapsed={setCollapsed}
           onClose={onClose}
           isActive={isActive}
+          onAction={handleAction}
         />
       </aside>
 
+      {/* DESKTOP */}
       <aside
-        className={`
-          hidden lg:flex flex-col h-screen
-          bg-gradient-to-b from-[#3B2E7E] to-[#2A1F5C] text-white
-          transition-all duration-300 ease-in-out flex-shrink-0
-          will-change-[width]
-          ${collapsed ? "w-[72px]" : "w-[250px]"}
-        `}
+        className={`hidden lg:flex flex-col h-screen bg-gradient-to-b from-[#3B2E7E] to-[#2A1F5C] text-white ${collapsed ? "w-[72px]" : "w-[250px]"}`}
       >
         <SidebarContent
           menu={menu}
-          isMobile={false}
           collapsed={collapsed}
           setCollapsed={setCollapsed}
-          onClose={onClose}
           isActive={isActive}
+          onAction={handleAction}
         />
       </aside>
+
+      {/* 🔥 ASSIGNMENT PANEL */}
+      {/* 🔥 ASSIGNMENTS MODAL */}
+      {showAssignments && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          {/* BACKDROP */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowAssignments(false)}
+          />
+
+          {/* MODAL */}
+          <div className="relative w-full max-w-6xl h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            {/* HEADER */}
+            <div className="flex justify-between items-center px-6 py-4 border-b">
+              <h2 className="text-lg font-semibold">Access Management</h2>
+
+              <button
+                onClick={() => setShowAssignments(false)}
+                className="p-2 rounded-lg hover:bg-gray-100"
+              >
+                <X />
+              </button>
+            </div>
+
+            {/* TABS */}
+            <div className="flex border-b px-6">
+              {["deal", "contact", "account"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => {
+                    setActiveTab(t);
+                    dispatch(fetchAssignments(t));
+                  }}
+                  className={`px-4 py-3 text-sm font-medium ${
+                    activeTab === t
+                      ? "border-b-2 border-indigo-600 text-indigo-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            {/* CONTENT */}
+            <div className="flex-1 overflow-hidden p-4">
+              <AssignmentGrid type={activeTab} />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

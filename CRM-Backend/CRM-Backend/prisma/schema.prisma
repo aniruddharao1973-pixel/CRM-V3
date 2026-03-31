@@ -18,6 +18,7 @@ model User {
 
   avatar   String?
   isActive Boolean  @default(true)
+  
 
   // Email Provider
   emailProvider EmailProvider?
@@ -66,6 +67,12 @@ organizedMeetings   Meeting[]
   // NEW
 createdEmailCampaigns EmailCampaign[]
 
+
+// 🔥 NEW: ASSIGNMENTS
+dealAssignments    DealAssignment[]
+contactAssignments ContactAssignment[]
+accountAssignments AccountAssignment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -75,8 +82,6 @@ ADMIN
 MANAGER
 SALES_REP
 }
-
-
 
 
 
@@ -97,6 +102,15 @@ model Account {
   annualRevenue Float?
   employees     Int?
   rating        AccountRating?
+
+  // 🔥 NEW: Lifecycle (MAIN FIELD YOU NEED)
+  lifecycle AccountLifecycle @default(ACTIVE)
+
+  // 🔥 NEW: Track lifecycle changes
+  lifecycleUpdatedAt DateTime @default(now())
+
+  // 🔥 NEW: Critical for analytics (DO NOT SKIP)
+  lastActivityAt DateTime?
 
   phone         String?
   website       String?
@@ -122,12 +136,17 @@ model Account {
   emails   EmailLog[]
   whatsAppMessages WhatsAppMessage[]
   meetings Meeting[]
+  assignments AccountAssignment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([accountOwnerId])
   @@index([accountName])
+
+  // 🔥 NEW INDEXES (for analytics performance)
+  @@index([lifecycle])
+  @@index([lastActivityAt])
 }
 
 enum AccountType {
@@ -138,6 +157,13 @@ enum AccountType {
   INSTALLATION_PARTNER
   TECHNOLOGY_PARTNER
   OTHER
+}
+
+enum AccountLifecycle {
+  PROSPECT
+  ACTIVE
+  INACTIVE
+  DEACTIVATED
 }
 
 enum AccountRating {
@@ -189,6 +215,7 @@ model Contact {
   whatsAppMessages WhatsAppMessage[]
   meetings Meeting[]
   meetingAttendees MeetingAttendee[]
+  assignments ContactAssignment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -248,6 +275,7 @@ model Deal {
   emails      EmailLog[]
   whatsAppMessages WhatsAppMessage[]
   meetings Meeting[]
+  assignments DealAssignment[] 
   // 🔐 Deal Risk Analytics (NEW)
   risk        DealRisk?
   riskHistory DealRiskHistory[]
@@ -401,6 +429,9 @@ model DealStageHistory {
   probability     Int?
   expectedRevenue Float?
   closingDate     DateTime?
+
+  // ✅ NEW FIELD (for stage change notes)
+  description String? @db.Text
 
   changedById String
   changedBy   User   @relation("StageChangedBy", fields: [changedById], references: [id])
@@ -836,4 +867,42 @@ model MeetingReminder {
 
   @@index([remindAt])
   @@index([meetingId])
+}
+
+model DealAssignment {
+  id String @id @default(uuid())
+
+  dealId String
+  userId String
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([dealId, userId])
+}
+
+model ContactAssignment {
+  id String @id @default(uuid())
+
+  contactId String
+  userId String
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, userId])
+}
+
+model AccountAssignment {
+  id String @id @default(uuid())
+
+  accountId String
+  userId String
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, userId])
 }

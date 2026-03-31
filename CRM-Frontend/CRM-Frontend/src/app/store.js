@@ -26,6 +26,7 @@ import notificationReducer from "../features/notifications/notificationSlice";
 import dealRiskReducer from "../features/analytics/dealRiskSlice";
 import emailReducer from "../features/email/emailSlice";
 import calendarReducer from "../features/calendar/calendarSlice";
+import assignmentReducer from "../features/assign/assignmentSlice";
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -38,6 +39,7 @@ export const store = configureStore({
     dealRisk: dealRiskReducer,
     email: emailReducer,
     calendar: calendarReducer,
+    assignment: assignmentReducer,
   },
   devTools: import.meta.env.DEV,
 });

@@ -117,6 +117,7 @@ export const sendSMTP = async ({
   userId,
   from,
   to,
+  bcc = [],
   subject,
   html,
   attachments,
@@ -178,6 +179,7 @@ EMAIL SIZE SAFETY CHECK
     const info = await transporter.sendMail({
       from: `"CRM System" <${from}>`,
       to,
+      bcc,
       subject,
       html,
       attachments,
@@ -338,7 +340,14 @@ EMAIL SIZE SAFETY CHECK
 SEND VIA GMAIL (GOOGLE API OAUTH)
 =====================================================
 */
-export const sendGmail = async ({ userId, to, subject, html, attachments }) => {
+export const sendGmail = async ({
+  userId,
+  to,
+  bcc = [],
+  subject,
+  html,
+  attachments,
+}) => {
   console.log("=================================================");
   console.log("📨 GMAIL EMAIL SENDING STARTED");
   console.log("=================================================");
@@ -413,22 +422,49 @@ export const sendGmail = async ({ userId, to, subject, html, attachments }) => {
       auth: oauth2Client,
     });
 
+    // const boundary = "crm_boundary";
+
+    // let messageParts = [
+    //   `From: CRM System <${user.email}>`,
+    //   `To: ${to}`,
+    //   ...(bcc.length ? [`Bcc: ${bcc.join(",")}`] : []),
+    //   `Subject: ${subject}`,
+    //   "MIME-Version: 1.0",
+    //   `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    //   "",
+
+    //   `--${boundary}`,
+    //   "Content-Type: text/plain; charset=UTF-8",
+    //   "",
+    //   "Your email client does not support HTML emails.",
+
+    //   `--${boundary}`,
+    //   "Content-Type: text/html; charset=UTF-8",
+    //   "",
+    //   html,
+
+    //   `--${boundary}--`,
+    // ];
+
     const boundary = "crm_boundary";
 
     let messageParts = [
       `From: CRM System <${user.email}>`,
       `To: ${to}`,
+      ...(bcc.length ? [`Bcc: ${bcc.join(",")}`] : []),
       `Subject: ${subject}`,
       "MIME-Version: 1.0",
-      `Content-Type: multipart/related; boundary=${boundary}`,
+      `Content-Type: multipart/related; boundary="${boundary}"`,
       "",
+
       `--${boundary}`,
       "Content-Type: text/html; charset=UTF-8",
       "",
       html,
     ];
 
-    for (const file of attachments) {
+    // ✅ INLINE IMAGE SUPPORT
+    for (const file of attachments || []) {
       const fs = await import("fs");
       const content = fs.readFileSync(file.path).toString("base64");
 
@@ -444,6 +480,23 @@ export const sendGmail = async ({ userId, to, subject, html, attachments }) => {
     }
 
     messageParts.push(`--${boundary}--`);
+
+    // for (const file of attachments) {
+    //   const fs = await import("fs");
+    //   const content = fs.readFileSync(file.path).toString("base64");
+
+    //   messageParts.push(
+    //     `--${boundary}`,
+    //     `Content-Type: image/png`,
+    //     `Content-Transfer-Encoding: base64`,
+    //     `Content-ID: <${file.cid}>`,
+    //     `Content-Disposition: inline; filename="${file.filename}"`,
+    //     "",
+    //     content,
+    //   );
+    // }
+
+    // messageParts.push(`--${boundary}--`);
 
     const message = messageParts.join("\r\n");
 
@@ -479,13 +532,13 @@ export const sendGmail = async ({ userId, to, subject, html, attachments }) => {
     console.log("📨 Gmail API FULL RESPONSE:");
     console.log(JSON.stringify(res.data, null, 2));
 
-    const messageDetails = await gmail.users.messages.get({
-      userId: "me",
-      id: res.data.id,
-    });
+    // const messageDetails = await gmail.users.messages.get({
+    //   userId: "me",
+    //   id: res.data.id,
+    // });
 
-    console.log("📧 Gmail Stored Labels:", messageDetails.data.labelIds);
-    console.log("📧 Gmail Thread ID:", messageDetails.data.threadId);
+    // console.log("📧 Gmail Stored Labels:", messageDetails.data.labelIds);
+    // console.log("📧 Gmail Thread ID:", messageDetails.data.threadId);
 
     return {
       messageId: res.data.id,
@@ -547,6 +600,11 @@ const refreshMicrosoftToken = async (user) => {
   return tokens.access_token;
 };
 
+const buildRecipients = (emails = []) =>
+  emails.map((email) => ({
+    emailAddress: { address: email },
+  }));
+
 /*
 =====================================================
 SEND VIA OUTLOOK (MICROSOFT GRAPH API)
@@ -555,6 +613,7 @@ SEND VIA OUTLOOK (MICROSOFT GRAPH API)
 export const sendOutlook = async ({
   userId,
   to,
+  bcc = [],
   subject,
   html,
   attachments = [],
@@ -639,13 +698,8 @@ SEND REQUEST
               address: user.email,
             },
           },
-          toRecipients: [
-            {
-              emailAddress: {
-                address: to,
-              },
-            },
-          ],
+          toRecipients: buildRecipients([to]),
+          bccRecipients: buildRecipients(bcc), // ✅ NEW
           attachments: inlineAttachments,
         },
         saveToSentItems: true,
@@ -676,13 +730,8 @@ AUTO REFRESH TOKEN IF EXPIRED
               contentType: "HTML",
               content: html,
             },
-            toRecipients: [
-              {
-                emailAddress: {
-                  address: to,
-                },
-              },
-            ],
+            toRecipients: buildRecipients([to]),
+            bccRecipients: buildRecipients(bcc), // ✅ NEW
             attachments: inlineAttachments,
           },
           saveToSentItems: true,

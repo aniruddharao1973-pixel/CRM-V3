@@ -158,6 +158,7 @@ import emailRoutes from "./modules/email/email.routes.js";
 import calendarRoutes from "./modules/calendar/calendar.routes.js";
 
 import { warmUpModel, getModelStatus } from "./ai/aiClient.js";
+import assignmentRoutes from "./routes/assignment.routes.js";
 
 dotenv.config();
 
@@ -278,6 +279,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/assignment", assignmentRoutes);
 
 app.use("/public", express.static("public"));
 

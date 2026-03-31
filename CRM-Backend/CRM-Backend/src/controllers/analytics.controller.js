@@ -1959,6 +1959,101 @@ export const getStageDeals = asyncHandler(async (req, res) => {
   });
 });
 
+// /* =====================================
+//    KPI METRICS
+// ===================================== */
+
+// export const getKpiMetrics = asyncHandler(async (req, res) => {
+//   /* -----------------------------
+//      CLOSED DEAL COUNTS
+//   ----------------------------- */
+
+//   const wonDeals = await prisma.deal.count({
+//     where: { stage: "CLOSED_WON" },
+//   });
+
+//   const lostDeals = await prisma.deal.count({
+//     where: {
+//       stage: {
+//         in: ["CLOSED_LOST", "CLOSED_LOST_TO_COMPETITION", "REGRETTED"],
+//       },
+//     },
+//   });
+
+//   const closedDeals = wonDeals + lostDeals;
+
+//   /* -----------------------------
+//      1️⃣ CONVERSION RATE
+//      (Won vs total closed)
+//   ----------------------------- */
+
+//   const conversionRate =
+//     closedDeals > 0 ? Math.round((wonDeals / closedDeals) * 100) : 0;
+
+//   /* -----------------------------
+//      2️⃣ REVENUE WON
+//   ----------------------------- */
+
+//   const revenueWonAgg = await prisma.deal.aggregate({
+//     _sum: { amount: true },
+//     where: { stage: "CLOSED_WON" },
+//   });
+
+//   const revenueWon = Math.round(revenueWonAgg._sum.amount || 0);
+
+//   /* -----------------------------
+//      3️⃣ WIN / LOSS RATIO
+//   ----------------------------- */
+
+//   const winLossRatio = {
+//     won: wonDeals,
+//     lost: lostDeals,
+//   };
+
+//   /* -----------------------------
+//      4️⃣ REVENUE REALIZATION RATE
+//      Revenue Won / (Won + Lost revenue)
+//   ----------------------------- */
+
+//   const revenueLostAgg = await prisma.deal.aggregate({
+//     _sum: { amount: true },
+//     where: {
+//       stage: {
+//         in: ["CLOSED_LOST", "CLOSED_LOST_TO_COMPETITION", "REGRETTED"],
+//       },
+//     },
+//   });
+
+//   const revenueLost = revenueLostAgg._sum.amount || 0;
+
+//   const revenueRealizationRate =
+//     revenueWon + revenueLost > 0
+//       ? Number(((revenueWon / (revenueWon + revenueLost)) * 100).toFixed(2))
+//       : 0;
+
+//   /* -----------------------------
+//      RESPONSE
+//   ----------------------------- */
+
+//   res.json({
+//     success: true,
+//     data: {
+//       conversionRate,
+//       revenueWon,
+//       winLossRatio,
+//       revenueRealizationRate,
+
+//       calculation: {
+//         wonDeals,
+//         lostDeals,
+//         closedDeals,
+//         revenueWon,
+//         revenueLost,
+//       },
+//     },
+//   });
+// });
+
 /* =====================================
    KPI METRICS
 ===================================== */
@@ -1984,7 +2079,6 @@ export const getKpiMetrics = asyncHandler(async (req, res) => {
 
   /* -----------------------------
      1️⃣ CONVERSION RATE
-     (Won vs total closed)
   ----------------------------- */
 
   const conversionRate =
@@ -2002,17 +2096,7 @@ export const getKpiMetrics = asyncHandler(async (req, res) => {
   const revenueWon = Math.round(revenueWonAgg._sum.amount || 0);
 
   /* -----------------------------
-     3️⃣ WIN / LOSS RATIO
-  ----------------------------- */
-
-  const winLossRatio = {
-    won: wonDeals,
-    lost: lostDeals,
-  };
-
-  /* -----------------------------
-     4️⃣ REVENUE REALIZATION RATE
-     Revenue Won / (Won + Lost revenue)
+     3️⃣ REVENUE REALIZATION RATE
   ----------------------------- */
 
   const revenueLostAgg = await prisma.deal.aggregate({
@@ -2032,6 +2116,41 @@ export const getKpiMetrics = asyncHandler(async (req, res) => {
       : 0;
 
   /* -----------------------------
+     4️⃣ OVERDUE DEALS %
+  ----------------------------- */
+
+  const activeDealsWhere = {
+    stage: {
+      notIn: [
+        "CLOSED_WON",
+        "CLOSED_LOST",
+        "CLOSED_LOST_TO_COMPETITION",
+        "REGRETTED",
+      ],
+    },
+  };
+
+  const totalActiveDeals = await prisma.deal.count({
+    where: activeDealsWhere,
+  });
+
+  const today = new Date();
+
+  const overdueDeals = await prisma.deal.count({
+    where: {
+      ...activeDealsWhere,
+      closingDate: {
+        lt: today,
+      },
+    },
+  });
+
+  const overdueDealsPercent =
+    totalActiveDeals > 0
+      ? Number(((overdueDeals / totalActiveDeals) * 100).toFixed(1))
+      : 0;
+
+  /* -----------------------------
      RESPONSE
   ----------------------------- */
 
@@ -2040,7 +2159,7 @@ export const getKpiMetrics = asyncHandler(async (req, res) => {
     data: {
       conversionRate,
       revenueWon,
-      winLossRatio,
+      overdueDealsPercent, // ✅ NEW KPI
       revenueRealizationRate,
 
       calculation: {
@@ -2049,6 +2168,10 @@ export const getKpiMetrics = asyncHandler(async (req, res) => {
         closedDeals,
         revenueWon,
         revenueLost,
+
+        // ✅ NEW
+        totalActiveDeals,
+        overdueDeals,
       },
     },
   });
@@ -2068,5 +2191,66 @@ export const getDealMomentumAnalytics = asyncHandler(async (req, res) => {
     success: true,
     count: deals.length,
     data: deals,
+  });
+});
+
+/* ============================================================
+   OVERDUE DEALS (Drilldown)
+   @route GET /api/analytics/overdue-deals
+============================================================ */
+
+export const getOverdueDeals = asyncHandler(async (req, res) => {
+  const today = new Date();
+
+  const ACTIVE_STAGES = [
+    "RFQ",
+    "VISIT_MEETING",
+    "PREVIEW",
+    "TECHNICAL_PROPOSAL",
+    "COMMERCIAL_PROPOSAL",
+    "REVIEW_FEEDBACK",
+    "MOVED_TO_PURCHASE",
+    "NEGOTIATION",
+  ];
+
+  const deals = await prisma.deal.findMany({
+    where: {
+      stage: { in: ACTIVE_STAGES },
+      closingDate: { lt: today }, // ✅ overdue condition
+    },
+    include: {
+      owner: { select: { name: true } },
+      account: { select: { accountName: true } },
+      stageHistory: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+
+  const result = deals.map((deal) => {
+    const enteredAt =
+      deal.stageHistory[0]?.createdAt || deal.updatedAt || deal.createdAt;
+
+    const daysOverdue = Math.max(
+      1,
+      Math.floor((today - new Date(deal.closingDate)) / (1000 * 60 * 60 * 24)),
+    );
+
+    return {
+      dealId: deal.id,
+      dealName: deal.dealName,
+      accountName: deal.account?.accountName || "Unknown",
+      stage: deal.stage,
+      owner: deal.owner?.name || "N/A",
+      closingDate: deal.closingDate,
+      delayDays: daysOverdue,
+      enteredStageAt: enteredAt,
+    };
+  });
+
+  res.json({
+    success: true,
+    data: result.sort((a, b) => b.daysOverdue - a.daysOverdue), // ✅ sorted
   });
 });

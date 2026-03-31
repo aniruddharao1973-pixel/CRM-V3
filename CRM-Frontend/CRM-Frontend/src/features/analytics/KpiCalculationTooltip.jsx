@@ -1,9 +1,131 @@
-// src/features/analytics/KpiCalculationTooltip.jsx
+// // src/features/analytics/KpiCalculationTooltip.jsx
+// import { useEffect, useRef, useState } from "react";
 
-import { useEffect, useRef } from "react";
+// export default function KpiCalculationTooltip({ children, open, onClose }) {
+//   const ref = useRef();
+//   const [position, setPosition] = useState("center"); // left | center | right
+
+//   useEffect(() => {
+//     function handleClickOutside(e) {
+//       if (ref.current && !ref.current.contains(e.target)) {
+//         onClose && onClose();
+//       }
+//     }
+
+//     function handleEscape(e) {
+//       if (e.key === "Escape") {
+//         onClose && onClose();
+//       }
+//     }
+
+//     if (open) {
+//       document.addEventListener("mousedown", handleClickOutside);
+//       document.addEventListener("keydown", handleEscape);
+
+//       // 🔥 Smart positioning (prevent overflow)
+//       const rect = ref.current?.getBoundingClientRect();
+//       if (rect) {
+//         if (rect.left < 20) setPosition("left");
+//         else if (rect.right > window.innerWidth - 20) setPosition("right");
+//         else setPosition("center");
+//       }
+//     }
+
+//     return () => {
+//       document.removeEventListener("mousedown", handleClickOutside);
+//       document.removeEventListener("keydown", handleEscape);
+//     };
+//   }, [open, onClose]);
+
+//   if (!open) return null;
+
+//   return (
+//     <div
+//       ref={ref}
+//       className={`
+//         absolute bottom-full mb-3 z-[9999]
+//         ${position === "center" && "left-1/2 -translate-x-1/2"}
+//         ${position === "left" && "left-0"}
+//         ${position === "right" && "right-0"}
+
+//         w-[340px] max-w-[90vw]
+//         rounded-2xl
+
+//         bg-white
+//         border border-slate-200
+
+//         shadow-[0_10px_30px_rgba(0,0,0,0.08)]
+//         ring-1 ring-black/5
+
+//         animate-in fade-in zoom-in-95 duration-150
+//       `}
+//     >
+//       {/* HEADER STRIP (Enterprise touch) */}
+//       <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+//         <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+//           Calculation
+//         </span>
+
+//         <button
+//           onClick={onClose}
+//           className="
+//             text-slate-400 hover:text-slate-600
+//             text-xs px-1.5 py-0.5 rounded
+//             hover:bg-slate-100 transition
+//           "
+//         >
+//           ✕
+//         </button>
+//       </div>
+
+//       {/* BODY */}
+//       <div className="px-4 py-4 space-y-4 text-sm text-slate-700">
+//         {children}
+//       </div>
+
+//       {/* FOOTER */}
+//       <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl">
+//         <p className="text-[11px] text-slate-500">
+//           Tip: Use actual revenue for real performance comparison.
+//         </p>
+//       </div>
+
+//       {/* ARROW */}
+//       <div
+//         className={`
+//           absolute top-full h-3 w-3 rotate-45 bg-white
+//           border-r border-b border-slate-200
+
+//           ${
+//             position === "center"
+//               ? "left-1/2 -translate-x-1/2"
+//               : position === "left"
+//                 ? "left-6"
+//                 : "right-6"
+//           }
+//         `}
+//       />
+//     </div>
+//   );
+// }
+
+// src/features/analytics/KpiCalculationTooltip.jsx
+import { useEffect, useRef, useState } from "react";
 
 export default function KpiCalculationTooltip({ children, open, onClose }) {
   const ref = useRef();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    function checkScreen() {
+      setIsMobile(window.innerWidth < 640); // Tailwind sm breakpoint
+    }
+
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -12,49 +134,102 @@ export default function KpiCalculationTooltip({ children, open, onClose }) {
       }
     }
 
+    function handleEscape(e) {
+      if (e.key === "Escape") {
+        onClose && onClose();
+      }
+    }
+
     if (open) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [open, onClose]);
 
   if (!open) return null;
 
   return (
-    <div
-      ref={ref}
-      className="
-  absolute left-1/2 bottom-full mb-3
-  -translate-x-1/2
+    <>
+      {/* 🔥 MOBILE BACKDROP */}
+      {isMobile && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+          onClick={onClose}
+        />
+      )}
 
-  w-80 rounded-2xl
-  border border-slate-200
-  bg-white/95 backdrop-blur-xl
-
-  shadow-[0_18px_45px_rgba(15,23,42,0.25)]
-  ring-1 ring-slate-200/50
-
-  p-5 text-sm text-slate-700
-  z-[9999]
-"
-    >
-      {/* Glow */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-50/40 via-transparent to-sky-50/40 pointer-events-none" />
-
-      <div className="relative z-10 space-y-2 leading-relaxed">{children}</div>
-
-      {/* Arrow */}
+      {/* 🔥 TOOLTIP */}
       <div
-        className="
-    absolute left-1/2 top-full
-    h-4 w-4 -translate-x-1/2
-    rotate-45 bg-white
-    border-r border-b border-slate-200
-  "
-      />
-    </div>
+        ref={ref}
+        className={`
+          z-50
+
+          ${
+            isMobile
+              ? `
+                fixed
+                top-1/2 left-1/2
+                -translate-x-1/2 -translate-y-1/2
+                w-[92vw] max-w-md
+              `
+              : `
+                absolute bottom-full mb-3
+                left-1/2 -translate-x-1/2
+                w-[340px]
+              `
+          }
+
+          rounded-2xl
+          bg-white
+          border border-slate-200
+          shadow-[0_10px_30px_rgba(0,0,0,0.08)]
+          ring-1 ring-black/5
+
+          animate-in fade-in zoom-in-95 duration-200
+        `}
+      >
+        {/* HEADER */}
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+            Calculation
+          </span>
+
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 text-xs px-1.5 py-0.5 rounded hover:bg-slate-100 transition"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className="px-4 py-4 space-y-4 text-sm text-slate-700 max-h-[60vh] overflow-y-auto">
+          {children}
+        </div>
+
+        {/* FOOTER */}
+        <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl">
+          <p className="text-[11px] text-slate-500">
+            Tip: Use actual revenue for real performance comparison.
+          </p>
+        </div>
+
+        {/* 🔥 ARROW (DESKTOP ONLY) */}
+        {!isMobile && (
+          <div
+            className="
+              absolute top-full left-1/2 -translate-x-1/2
+              h-3 w-3 rotate-45 bg-white
+              border-r border-b border-slate-200
+            "
+          />
+        )}
+      </div>
+    </>
   );
 }

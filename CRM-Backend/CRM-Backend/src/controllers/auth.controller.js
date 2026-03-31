@@ -176,6 +176,9 @@ export const getMe = asyncHandler(async (req, res) => {
 
 export const getUsers = asyncHandler(async (req, res) => {
   const users = await prisma.user.findMany({
+    where: {
+      isActive: true, // 🔥 THIS IS THE FIX
+    },
     select: {
       id: true,
       name: true,
@@ -194,23 +197,78 @@ export const getUsers = asyncHandler(async (req, res) => {
   });
 });
 
+// export const deleteUser = asyncHandler(async (req, res) => {
+//   const user = await prisma.user.findUnique({
+//     where: { id: req.params.id },
+//   });
+
+//   if (!user) {
+//     throw new ApiError(404, "User not found");
+//   }
+
+//   await prisma.user.update({
+//     where: { id: req.params.id },
+//     data: { isActive: false },
+//   });
+
+//   res.json({
+//     success: true,
+//     message: "User deactivated successfully",
+//   });
+// });
+
 export const deleteUser = asyncHandler(async (req, res) => {
+  const userId = req.params.id;
+
   const user = await prisma.user.findUnique({
-    where: { id: req.params.id },
+    where: { id: userId },
   });
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-  await prisma.user.update({
-    where: { id: req.params.id },
-    data: { isActive: false },
-  });
+  if (req.user.id === userId) {
+    throw new ApiError(400, "You cannot delete yourself");
+  }
+
+  // 🔥 TRANSACTION (clean everything safely)
+  await prisma.$transaction([
+    // 1. Remove from assignment tables
+    prisma.dealAssignment.deleteMany({
+      where: { userId },
+    }),
+    prisma.contactAssignment.deleteMany({
+      where: { userId },
+    }),
+    prisma.accountAssignment.deleteMany({
+      where: { userId },
+    }),
+
+    // 2. Remove ownership
+    // prisma.deal.updateMany({
+    //   where: { dealOwnerId: userId },
+    //   data: { dealOwnerId: null },
+    // }),
+    // prisma.contact.updateMany({
+    //   where: { contactOwnerId: userId },
+    //   data: { contactOwnerId: null },
+    // }),
+    // prisma.account.updateMany({
+    //   where: { accountOwnerId: userId },
+    //   data: { accountOwnerId: null },
+    // }),
+
+    // 3. Soft delete user
+    prisma.user.update({
+      where: { id: userId },
+      data: { isActive: false },
+    }),
+  ]);
 
   res.json({
     success: true,
-    message: "User deactivated successfully",
+    message: "User deleted and cleaned from assignments",
   });
 });
 // @desc    Update user

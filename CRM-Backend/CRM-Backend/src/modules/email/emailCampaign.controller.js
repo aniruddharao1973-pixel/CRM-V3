@@ -11,10 +11,36 @@ SEND BULK EMAIL CAMPAIGN
 
 export async function sendCampaign(req, res) {
   try {
-    const { templateId, recipients, contactIds, subject, body, campaignName } =
-      req.body;
+    const {
+      templateId,
+      recipients,
+      contactIds,
+      subject,
+      body,
+      campaignName,
+      bcc, // ✅ NEW
+    } = req.body;
 
     const userId = req.user.id;
+
+    // ✅ Normalize BCC (array OR comma string)
+    const normalizeEmails = (field) => {
+      if (!field) return [];
+      if (Array.isArray(field)) return field;
+      return field
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean);
+    };
+
+    const normalizedBcc = normalizeEmails(bcc);
+
+    if (normalizedBcc.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: "Too many BCC recipients (max 500)",
+      });
+    }
 
     /*
     =====================================================
@@ -124,6 +150,7 @@ export async function sendCampaign(req, res) {
       campaignId: campaign.id,
       subject: finalSubject,
       body: finalBody,
+      bcc: normalizedBcc, // ✅ NEW
     });
 
     /*

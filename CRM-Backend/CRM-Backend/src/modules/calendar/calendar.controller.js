@@ -714,12 +714,50 @@ export const deleteMeetingController = async (req, res) => {
   }
 };
 
+// // microsoft connect //
+// export const connectMicrosoftCalendar = async (req, res) => {
+//   try {
+//     const { userId } = req.query;
+
+//     const url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${process.env.MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${process.env.MICROSOFT_REDIRECT_URI}&response_mode=query&scope=offline_access%20User.Read%20Calendars.ReadWrite%20OnlineMeetings.ReadWrite&prompt=consent&state=${userId}`;
+
+//     res.redirect(url);
+//   } catch (error) {
+//     console.error("Microsoft connect error:", error);
+//     res.status(500).json({ message: "Microsoft connect failed" });
+//   }
+// };
+
 // microsoft connect //
 export const connectMicrosoftCalendar = async (req, res) => {
   try {
     const { userId } = req.query;
 
-    const url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${process.env.MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${process.env.MICROSOFT_REDIRECT_URI}&response_mode=query&scope=offline_access%20User.Read%20Calendars.ReadWrite%20OnlineMeetings.ReadWrite&prompt=consent&state=${userId}`;
+    const params = new URLSearchParams({
+      client_id: process.env.MICROSOFT_CLIENT_ID,
+      response_type: "code",
+      redirect_uri: process.env.MICROSOFT_REDIRECT_URI,
+      response_mode: "query",
+
+      // ✅ FIXED SCOPES (VERY IMPORTANT)
+      scope: [
+        "offline_access",
+        "openid",
+        "profile",
+        "email",
+        "User.Read",
+        "Calendars.ReadWrite",
+        "OnlineMeetings.ReadWrite",
+      ].join(" "),
+
+      // ✅ BETTER ACCOUNT HANDLING
+      prompt: "select_account",
+
+      // ✅ USER MAPPING
+      state: userId,
+    });
+
+    const url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params.toString()}`;
 
     res.redirect(url);
   } catch (error) {

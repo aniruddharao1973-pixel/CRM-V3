@@ -749,6 +749,10 @@ const DealList = () => {
 
   const { deals, pagination, loading } = useSelector((s) => s.deals);
 
+  const { user } = useSelector((state) => state.auth);
+
+  const canDelete = user?.role === "ADMIN" || user?.role === "MANAGER";
+
   const [page, setPage] = useState(1);
 
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -1310,19 +1314,21 @@ const DealList = () => {
                             >
                               <PencilSquareIcon className="w-4 h-4" />
                             </button>
-                            <button
-                              onClick={() =>
-                                setDeleteModal({
-                                  open: true,
-                                  id: deal.id,
-                                  name: deal.dealName,
-                                })
-                              }
-                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                              title="Delete Deal"
-                            >
-                              <TrashIcon className="w-4 h-4" />
-                            </button>
+                            {canDelete && (
+                              <button
+                                onClick={() =>
+                                  setDeleteModal({
+                                    open: true,
+                                    id: deal.id,
+                                    name: deal.dealName,
+                                  })
+                                }
+                                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                title="Delete Deal"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

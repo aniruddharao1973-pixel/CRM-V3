@@ -1,9 +1,426 @@
+// // src\controllers\account.controller.js
+// import prisma from "../utils/prisma.js";
+// import { ApiError, asyncHandler } from "../utils/ApiError.js";
+
+// // @desc    Get all accounts
+// // @route   GET /api/accounts
+// export const getAccounts = asyncHandler(async (req, res) => {
+//   const {
+//     page = 1,
+//     limit = 10,
+//     search = "",
+//     sortBy = "createdAt",
+//     sortOrder = "desc",
+//     industry,
+//     accountType,
+//     rating,
+//   } = req.query;
+
+//   const skip = (parseInt(page) - 1) * parseInt(limit);
+
+//   const where = {
+//     ...(search && {
+//       OR: [
+//         { accountName: { contains: search, mode: "insensitive" } },
+//         { phone: { contains: search, mode: "insensitive" } },
+//         { accountNumber: { contains: search, mode: "insensitive" } },
+//       ],
+//     }),
+//     ...(industry && { industry }),
+//     ...(accountType && { accountType }),
+//     ...(rating && { rating }),
+//   };
+
+//   const [accounts, total] = await Promise.all([
+//     prisma.account.findMany({
+//       where,
+//       include: {
+//         owner: { select: { id: true, name: true, email: true } },
+//         parentAccount: { select: { id: true, accountName: true } },
+//         _count: { select: { contacts: true, deals: true } },
+//       },
+//       orderBy: { [sortBy]: sortOrder },
+//       skip,
+//       take: parseInt(limit),
+//     }),
+//     prisma.account.count({ where }),
+//   ]);
+
+//   res.json({
+//     success: true,
+//     data: accounts,
+//     pagination: {
+//       page: parseInt(page),
+//       limit: parseInt(limit),
+//       total,
+//       pages: Math.ceil(total / parseInt(limit)),
+//     },
+//   });
+// });
+
+// // @desc    Get single account
+// // @route   GET /api/accounts/:id
+// export const getAccount = asyncHandler(async (req, res) => {
+//   const account = await prisma.account.findUnique({
+//     where: { id: req.params.id },
+//     include: {
+//       owner: { select: { id: true, name: true, email: true } },
+//       parentAccount: { select: { id: true, accountName: true } },
+//       childAccounts: { select: { id: true, accountName: true } },
+//       contacts: {
+//         select: {
+//           id: true,
+//           firstName: true,
+//           lastName: true,
+//           email: true,
+//           phone: true,
+//           title: true,
+//         },
+//         orderBy: { createdAt: "desc" },
+//       },
+//       deals: {
+//         select: {
+//           id: true,
+//           dealName: true,
+//           amount: true,
+//           stage: true,
+//           closingDate: true,
+//           owner: { select: { id: true, name: true } },
+//         },
+//         orderBy: { createdAt: "desc" },
+//       },
+//     },
+//   });
+
+//   if (!account) {
+//     throw new ApiError(404, "Account not found");
+//   }
+
+//   res.json({ success: true, data: account });
+// });
+
+// // @desc    Create account
+// // @route   POST /api/accounts
+// export const createAccount = asyncHandler(async (req, res) => {
+//   const data = {
+//     ...req.body,
+//     accountOwnerId: req.body.accountOwnerId || req.user.id,
+//     annualRevenue: req.body.annualRevenue ? parseFloat(req.body.annualRevenue) : null,
+//     employees: req.body.employees ? parseInt(req.body.employees) : null,
+//   };
+
+//   // Generate account number
+//   const count = await prisma.account.count();
+//   data.accountNumber = `ACC-${String(count + 1).padStart(6, "0")}`;
+
+//   const account = await prisma.account.create({
+//     data,
+//     include: {
+//       owner: { select: { id: true, name: true, email: true } },
+//     },
+//   });
+
+//   res.status(201).json({ success: true, data: account });
+// });
+
+// // @desc    Update account
+// // @route   PUT /api/accounts/:id
+// export const updateAccount = asyncHandler(async (req, res) => {
+//   const existing = await prisma.account.findUnique({
+//     where: { id: req.params.id },
+//   });
+
+//   if (!existing) {
+//     throw new ApiError(404, "Account not found");
+//   }
+
+//   const data = {
+//     ...req.body,
+//     annualRevenue: req.body.annualRevenue ? parseFloat(req.body.annualRevenue) : null,
+//     employees: req.body.employees ? parseInt(req.body.employees) : null,
+//   };
+
+//   // Remove fields that shouldn't be updated directly
+//   delete data.id;
+//   delete data.accountNumber;
+//   delete data.createdAt;
+//   delete data.updatedAt;
+
+//   const account = await prisma.account.update({
+//     where: { id: req.params.id },
+//     data,
+//     include: {
+//       owner: { select: { id: true, name: true, email: true } },
+//     },
+//   });
+
+//   res.json({ success: true, data: account });
+// });
+
+// // @desc    Delete account
+// // @route   DELETE /api/accounts/:id
+// export const deleteAccount = asyncHandler(async (req, res) => {
+//   const existing = await prisma.account.findUnique({
+//     where: { id: req.params.id },
+//     include: { _count: { select: { contacts: true, deals: true } } },
+//   });
+
+//   if (!existing) {
+//     throw new ApiError(404, "Account not found");
+//   }
+
+//   await prisma.account.delete({ where: { id: req.params.id } });
+
+//   res.json({ success: true, message: "Account deleted successfully" });
+// });
+
+// // @desc    Get accounts for dropdown
+// // @route   GET /api/accounts/dropdown/list
+// export const getAccountsDropdown = asyncHandler(async (req, res) => {
+//   const accounts = await prisma.account.findMany({
+//     select: { id: true, accountName: true },
+//     orderBy: { accountName: "asc" },
+//   });
+
+//   res.json({ success: true, data: accounts });
+// });
+
+// // src/controllers/account.controller.js
+// import prisma from "../utils/prisma.js";
+// import { ApiError, asyncHandler } from "../utils/ApiError.js";
+
+// // @desc    Get all accounts
+// // @route   GET /api/accounts
+// export const getAccounts = asyncHandler(async (req, res) => {
+//   const user = req.user;
+
+//   const {
+//     page = 1,
+//     limit = 10,
+//     search = "",
+//     sortBy = "createdAt",
+//     sortOrder = "desc",
+//     industry,
+//     accountType,
+//     rating,
+//   } = req.query;
+
+//   const skip = (parseInt(page) - 1) * parseInt(limit);
+
+//   const where = {
+//     ...(search && {
+//       OR: [
+//         { accountName: { contains: search, mode: "insensitive" } },
+//         { phone: { contains: search, mode: "insensitive" } },
+//         { accountNumber: { contains: search, mode: "insensitive" } },
+//       ],
+//     }),
+//     ...(industry && { industry }),
+//     ...(accountType && { accountType }),
+//     ...(rating && { rating }),
+
+//     // 🔥 ASSIGNMENT FILTER
+//     ...(user.role !== "ADMIN" && {
+//       assignments: {
+//         some: {
+//           userId: user.id,
+//         },
+//       },
+//     }),
+//   };
+
+//   const [accounts, total] = await Promise.all([
+//     prisma.account.findMany({
+//       where,
+//       include: {
+//         owner: { select: { id: true, name: true, email: true } },
+//         parentAccount: { select: { id: true, accountName: true } },
+//         _count: { select: { contacts: true, deals: true } },
+//       },
+//       orderBy: { [sortBy]: sortOrder },
+//       skip,
+//       take: parseInt(limit),
+//     }),
+//     prisma.account.count({ where }),
+//   ]);
+
+//   res.json({
+//     success: true,
+//     data: accounts,
+//     pagination: {
+//       page: parseInt(page),
+//       limit: parseInt(limit),
+//       total,
+//       pages: Math.ceil(total / parseInt(limit)),
+//     },
+//   });
+// });
+
+// // @desc    Get single account
+// // @route   GET /api/accounts/:id
+// export const getAccount = asyncHandler(async (req, res) => {
+//   const user = req.user;
+
+//   const account = await prisma.account.findFirst({
+//     where: {
+//       id: req.params.id,
+
+//       // 🔥 ASSIGNMENT FILTER
+//       ...(user.role !== "ADMIN" && {
+//         assignments: {
+//           some: {
+//             userId: user.id,
+//           },
+//         },
+//       }),
+//     },
+
+//     include: {
+//       owner: { select: { id: true, name: true, email: true } },
+//       parentAccount: { select: { id: true, accountName: true } },
+//       childAccounts: { select: { id: true, accountName: true } },
+//       contacts: {
+//         select: {
+//           id: true,
+//           firstName: true,
+//           lastName: true,
+//           email: true,
+//           phone: true,
+//           title: true,
+//         },
+//         orderBy: { createdAt: "desc" },
+//       },
+//       deals: {
+//         select: {
+//           id: true,
+//           dealName: true,
+//           amount: true,
+//           stage: true,
+//           closingDate: true,
+//           owner: { select: { id: true, name: true } },
+//         },
+//         orderBy: { createdAt: "desc" },
+//       },
+//     },
+//   });
+
+//   if (!account) {
+//     throw new ApiError(404, "Account not found or not assigned");
+//   }
+
+//   res.json({ success: true, data: account });
+// });
+
+// // @desc    Create account
+// // @route   POST /api/accounts
+// export const createAccount = asyncHandler(async (req, res) => {
+//   const data = {
+//     ...req.body,
+//     accountOwnerId: req.body.accountOwnerId || req.user.id,
+//     annualRevenue: req.body.annualRevenue
+//       ? parseFloat(req.body.annualRevenue)
+//       : null,
+//     employees: req.body.employees ? parseInt(req.body.employees) : null,
+//   };
+
+//   // Generate account number
+//   const count = await prisma.account.count();
+//   data.accountNumber = `ACC-${String(count + 1).padStart(6, "0")}`;
+
+//   const account = await prisma.account.create({
+//     data,
+//     include: {
+//       owner: { select: { id: true, name: true, email: true } },
+//     },
+//   });
+
+//   res.status(201).json({ success: true, data: account });
+// });
+
+// // @desc    Update account
+// // @route   PUT /api/accounts/:id
+// export const updateAccount = asyncHandler(async (req, res) => {
+//   const existing = await prisma.account.findUnique({
+//     where: { id: req.params.id },
+//   });
+
+//   if (!existing) {
+//     throw new ApiError(404, "Account not found");
+//   }
+
+//   const data = {
+//     ...req.body,
+//     annualRevenue: req.body.annualRevenue
+//       ? parseFloat(req.body.annualRevenue)
+//       : null,
+//     employees: req.body.employees ? parseInt(req.body.employees) : null,
+//   };
+
+//   delete data.id;
+//   delete data.accountNumber;
+//   delete data.createdAt;
+//   delete data.updatedAt;
+
+//   const account = await prisma.account.update({
+//     where: { id: req.params.id },
+//     data,
+//     include: {
+//       owner: { select: { id: true, name: true, email: true } },
+//     },
+//   });
+
+//   res.json({ success: true, data: account });
+// });
+
+// // @desc    Delete account
+// // @route   DELETE /api/accounts/:id
+// export const deleteAccount = asyncHandler(async (req, res) => {
+//   const existing = await prisma.account.findUnique({
+//     where: { id: req.params.id },
+//     include: { _count: { select: { contacts: true, deals: true } } },
+//   });
+
+//   if (!existing) {
+//     throw new ApiError(404, "Account not found");
+//   }
+
+//   await prisma.account.delete({ where: { id: req.params.id } });
+
+//   res.json({ success: true, message: "Account deleted successfully" });
+// });
+
+// // @desc    Get accounts for dropdown
+// // @route   GET /api/accounts/dropdown/list
+// export const getAccountsDropdown = asyncHandler(async (req, res) => {
+//   const user = req.user;
+
+//   const accounts = await prisma.account.findMany({
+//     where: {
+//       ...(user.role !== "ADMIN" && {
+//         assignments: {
+//           some: {
+//             userId: user.id,
+//           },
+//         },
+//       }),
+//     },
+//     select: { id: true, accountName: true },
+//     orderBy: { accountName: "asc" },
+//   });
+
+//   res.json({ success: true, data: accounts });
+// });
+
+// src/controllers/account.controller.js
 import prisma from "../utils/prisma.js";
 import { ApiError, asyncHandler } from "../utils/ApiError.js";
 
-// @desc    Get all accounts
-// @route   GET /api/accounts
+/* =========================================================
+   GET ALL ACCOUNTS (FIXED)
+========================================================= */
 export const getAccounts = asyncHandler(async (req, res) => {
+  const user = req.user;
+
   const {
     page = 1,
     limit = 10,
@@ -14,6 +431,7 @@ export const getAccounts = asyncHandler(async (req, res) => {
     accountType,
     rating,
   } = req.query;
+  const { lifecycle } = req.query;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -25,9 +443,21 @@ export const getAccounts = asyncHandler(async (req, res) => {
         { accountNumber: { contains: search, mode: "insensitive" } },
       ],
     }),
+
     ...(industry && { industry }),
     ...(accountType && { accountType }),
     ...(rating && { rating }),
+
+    // ✅ THIS IS THE MAIN CHANGE
+    ...(lifecycle ? { lifecycle } : { lifecycle: { not: "DEACTIVATED" } }),
+
+    ...(user.role !== "ADMIN" && {
+      assignments: {
+        some: {
+          userId: user.id,
+        },
+      },
+    }),
   };
 
   const [accounts, total] = await Promise.all([
@@ -57,11 +487,25 @@ export const getAccounts = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get single account
-// @route   GET /api/accounts/:id
+/* =========================================================
+   GET SINGLE ACCOUNT (FIXED)
+========================================================= */
 export const getAccount = asyncHandler(async (req, res) => {
-  const account = await prisma.account.findUnique({
-    where: { id: req.params.id },
+  const user = req.user;
+
+  const account = await prisma.account.findFirst({
+    where: {
+      id: req.params.id,
+
+      ...(user.role !== "ADMIN" && {
+        assignments: {
+          some: {
+            userId: user.id,
+          },
+        },
+      }),
+    },
+
     include: {
       owner: { select: { id: true, name: true, email: true } },
       parentAccount: { select: { id: true, accountName: true } },
@@ -92,38 +536,86 @@ export const getAccount = asyncHandler(async (req, res) => {
   });
 
   if (!account) {
-    throw new ApiError(404, "Account not found");
+    throw new ApiError(404, "Account not found or not assigned");
   }
 
   res.json({ success: true, data: account });
 });
 
-// @desc    Create account
-// @route   POST /api/accounts
+/* =========================================================
+   CREATE ACCOUNT
+========================================================= */
+// export const createAccount = asyncHandler(async (req, res) => {
+//   const data = {
+//     ...req.body,
+//     accountOwnerId: req.body.accountOwnerId || req.user.id,
+//     annualRevenue: req.body.annualRevenue
+//       ? parseFloat(req.body.annualRevenue)
+//       : null,
+//     employees: req.body.employees ? parseInt(req.body.employees) : null,
+//   };
+
+//   const count = await prisma.account.count();
+//   data.accountNumber = `ACC-${String(count + 1).padStart(6, "0")}`;
+
+//   const account = await prisma.account.create({
+//     data,
+//     include: {
+//       owner: { select: { id: true, name: true, email: true } },
+//     },
+//   });
+
+//   res.status(201).json({ success: true, data: account });
+// });
+
 export const createAccount = asyncHandler(async (req, res) => {
-  const data = {
-    ...req.body,
-    accountOwnerId: req.body.accountOwnerId || req.user.id,
-    annualRevenue: req.body.annualRevenue ? parseFloat(req.body.annualRevenue) : null,
-    employees: req.body.employees ? parseInt(req.body.employees) : null,
-  };
+  const result = await prisma.$transaction(async (tx) => {
+    const data = {
+      ...req.body,
+      accountOwnerId: req.body.accountOwnerId || req.user.id,
+      annualRevenue: req.body.annualRevenue
+        ? parseFloat(req.body.annualRevenue)
+        : null,
+      employees: req.body.employees ? parseInt(req.body.employees) : null,
 
-  // Generate account number
-  const count = await prisma.account.count();
-  data.accountNumber = `ACC-${String(count + 1).padStart(6, "0")}`;
+      // 🔥 NEW (add this)
+      lifecycle: req.body.lifecycle || "PROSPECT",
+      lifecycleUpdatedAt: new Date(),
+      lastActivityAt: new Date(), // initial activity
+    };
 
-  const account = await prisma.account.create({
-    data,
-    include: {
-      owner: { select: { id: true, name: true, email: true } },
-    },
+    // Generate account number
+    const count = await tx.account.count();
+    data.accountNumber = `ACC-${String(count + 1).padStart(6, "0")}`;
+
+    // 1️⃣ Create account
+    const account = await tx.account.create({
+      data,
+    });
+
+    // 2️⃣ 🔥 IMPORTANT: CREATE ASSIGNMENT
+    await tx.accountAssignment.create({
+      data: {
+        accountId: account.id,
+        userId: req.user.id,
+      },
+    });
+
+    // 3️⃣ Return full data
+    return tx.account.findUnique({
+      where: { id: account.id },
+      include: {
+        owner: { select: { id: true, name: true, email: true } },
+      },
+    });
   });
 
-  res.status(201).json({ success: true, data: account });
+  res.status(201).json({ success: true, data: result });
 });
 
-// @desc    Update account
-// @route   PUT /api/accounts/:id
+/* =========================================================
+   UPDATE ACCOUNT
+========================================================= */
 export const updateAccount = asyncHandler(async (req, res) => {
   const existing = await prisma.account.findUnique({
     where: { id: req.params.id },
@@ -135,11 +627,17 @@ export const updateAccount = asyncHandler(async (req, res) => {
 
   const data = {
     ...req.body,
-    annualRevenue: req.body.annualRevenue ? parseFloat(req.body.annualRevenue) : null,
+    annualRevenue: req.body.annualRevenue
+      ? parseFloat(req.body.annualRevenue)
+      : null,
     employees: req.body.employees ? parseInt(req.body.employees) : null,
   };
 
-  // Remove fields that shouldn't be updated directly
+  // 🔥 NEW: if lifecycle is changed → update timestamp
+  if (req.body.lifecycle) {
+    data.lifecycleUpdatedAt = new Date();
+  }
+
   delete data.id;
   delete data.accountNumber;
   delete data.createdAt;
@@ -156,30 +654,75 @@ export const updateAccount = asyncHandler(async (req, res) => {
   res.json({ success: true, data: account });
 });
 
-// @desc    Delete account
-// @route   DELETE /api/accounts/:id
+/* =========================================================
+   DELETE ACCOUNT
+========================================================= */
 export const deleteAccount = asyncHandler(async (req, res) => {
-  const existing = await prisma.account.findUnique({
+  await prisma.account.update({
     where: { id: req.params.id },
-    include: { _count: { select: { contacts: true, deals: true } } },
+    data: {
+      lifecycle: "DEACTIVATED",
+      lifecycleUpdatedAt: new Date(),
+    },
   });
-
-  if (!existing) {
-    throw new ApiError(404, "Account not found");
-  }
-
-  await prisma.account.delete({ where: { id: req.params.id } });
 
   res.json({ success: true, message: "Account deleted successfully" });
 });
 
-// @desc    Get accounts for dropdown
-// @route   GET /api/accounts/dropdown/list
+/* =========================================================
+   DROPDOWN (FIXED)
+========================================================= */
 export const getAccountsDropdown = asyncHandler(async (req, res) => {
+  const user = req.user;
+
   const accounts = await prisma.account.findMany({
+    where: {
+      lifecycle: { not: "DEACTIVATED" }, // ✅ add this
+
+      ...(user.role !== "ADMIN" && {
+        assignments: {
+          some: {
+            userId: user.id,
+          },
+        },
+      }),
+    },
     select: { id: true, accountName: true },
     orderBy: { accountName: "asc" },
   });
 
   res.json({ success: true, data: accounts });
+});
+/* =========================================================
+   RESTORE ACCOUNT (NEW)
+========================================================= */
+export const restoreAccount = asyncHandler(async (req, res) => {
+  const account = await prisma.account.findUnique({
+    where: { id: req.params.id },
+  });
+
+  if (!account) {
+    throw new ApiError(404, "Account not found");
+  }
+
+  if (account.lifecycle !== "DEACTIVATED") {
+    throw new ApiError(400, "Only deactivated accounts can be restored");
+  }
+
+  const updated = await prisma.account.update({
+    where: { id: req.params.id },
+    data: {
+      lifecycle: "ACTIVE",
+      lifecycleUpdatedAt: new Date(),
+    },
+    include: {
+      owner: { select: { id: true, name: true, email: true } },
+    },
+  });
+
+  res.json({
+    success: true,
+    message: "Account restored successfully",
+    data: updated,
+  });
 });

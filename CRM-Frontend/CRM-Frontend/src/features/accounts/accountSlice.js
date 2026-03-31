@@ -1,3 +1,4 @@
+// src\features\accounts\accountSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../api/axios";
 
@@ -8,9 +9,11 @@ export const fetchAccounts = createAsyncThunk(
       const { data } = await API.get("/accounts", { params });
       return data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch accounts");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch accounts",
+      );
     }
-  }
+  },
 );
 
 export const fetchAccount = createAsyncThunk(
@@ -20,9 +23,11 @@ export const fetchAccount = createAsyncThunk(
       const { data } = await API.get(`/accounts/${id}`);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch account");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch account",
+      );
     }
-  }
+  },
 );
 
 export const createAccount = createAsyncThunk(
@@ -32,9 +37,11 @@ export const createAccount = createAsyncThunk(
       const { data } = await API.post("/accounts", accountData);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to create account");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to create account",
+      );
     }
-  }
+  },
 );
 
 export const updateAccount = createAsyncThunk(
@@ -44,9 +51,11 @@ export const updateAccount = createAsyncThunk(
       const { data } = await API.put(`/accounts/${id}`, accountData);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to update account");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to update account",
+      );
     }
-  }
+  },
 );
 
 export const deleteAccount = createAsyncThunk(
@@ -56,9 +65,11 @@ export const deleteAccount = createAsyncThunk(
       await API.delete(`/accounts/${id}`);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to delete account");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to delete account",
+      );
     }
-  }
+  },
 );
 
 export const fetchAccountsDropdown = createAsyncThunk(
@@ -70,7 +81,21 @@ export const fetchAccountsDropdown = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
     }
-  }
+  },
+);
+
+export const restoreAccount = createAsyncThunk(
+  "accounts/restore",
+  async (id, { rejectWithValue }) => {
+    try {
+      const { data } = await API.patch(`/accounts/${id}/restore`);
+      return data.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to restore account",
+      );
+    }
+  },
 );
 
 const accountSlice = createSlice({
@@ -125,13 +150,34 @@ const accountSlice = createSlice({
       .addCase(updateAccount.fulfilled, (state, action) => {
         const idx = state.accounts.findIndex((a) => a.id === action.payload.id);
         if (idx !== -1) state.accounts[idx] = action.payload;
-        if (state.account?.id === action.payload.id) state.account = action.payload;
+        if (state.account?.id === action.payload.id)
+          state.account = action.payload;
       })
       .addCase(deleteAccount.fulfilled, (state, action) => {
-        state.accounts = state.accounts.filter((a) => a.id !== action.payload);
+        const idx = state.accounts.findIndex((a) => a.id === action.payload);
+        if (idx !== -1) {
+          state.accounts[idx].lifecycle = "DEACTIVATED";
+          state.accounts[idx].lifecycleUpdatedAt = new Date().toISOString();
+        }
+
+        if (state.account?.id === action.payload) {
+          state.account.lifecycle = "DEACTIVATED";
+          state.account.lifecycleUpdatedAt = new Date().toISOString();
+        }
       })
       .addCase(fetchAccountsDropdown.fulfilled, (state, action) => {
         state.dropdown = action.payload;
+      })
+      .addCase(restoreAccount.fulfilled, (state, action) => {
+        const idx = state.accounts.findIndex((a) => a.id === action.payload.id);
+
+        if (idx !== -1) {
+          state.accounts[idx] = action.payload;
+        }
+
+        if (state.account?.id === action.payload.id) {
+          state.account = action.payload;
+        }
       });
   },
 });

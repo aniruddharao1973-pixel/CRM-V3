@@ -1,3 +1,4 @@
+// src\features\contacts\contactSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../api/axios";
 
@@ -8,9 +9,11 @@ export const fetchContacts = createAsyncThunk(
       const { data } = await API.get("/contacts", { params });
       return data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch contacts");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch contacts",
+      );
     }
-  }
+  },
 );
 
 export const fetchContact = createAsyncThunk(
@@ -20,9 +23,11 @@ export const fetchContact = createAsyncThunk(
       const { data } = await API.get(`/contacts/${id}`);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch contact");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch contact",
+      );
     }
-  }
+  },
 );
 
 export const createContact = createAsyncThunk(
@@ -32,9 +37,11 @@ export const createContact = createAsyncThunk(
       const { data } = await API.post("/contacts", contactData);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to create contact");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to create contact",
+      );
     }
-  }
+  },
 );
 
 export const updateContact = createAsyncThunk(
@@ -44,9 +51,11 @@ export const updateContact = createAsyncThunk(
       const { data } = await API.put(`/contacts/${id}`, contactData);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to update contact");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to update contact",
+      );
     }
-  }
+  },
 );
 
 export const deleteContact = createAsyncThunk(
@@ -56,9 +65,11 @@ export const deleteContact = createAsyncThunk(
       await API.delete(`/contacts/${id}`);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to delete contact");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to delete contact",
+      );
     }
-  }
+  },
 );
 
 export const fetchContactsDropdown = createAsyncThunk(
@@ -70,7 +81,7 @@ export const fetchContactsDropdown = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
     }
-  }
+  },
 );
 
 const contactSlice = createSlice({
@@ -125,7 +136,8 @@ const contactSlice = createSlice({
       .addCase(updateContact.fulfilled, (state, action) => {
         const idx = state.contacts.findIndex((c) => c.id === action.payload.id);
         if (idx !== -1) state.contacts[idx] = action.payload;
-        if (state.contact?.id === action.payload.id) state.contact = action.payload;
+        if (state.contact?.id === action.payload.id)
+          state.contact = action.payload;
       })
       .addCase(deleteContact.fulfilled, (state, action) => {
         state.contacts = state.contacts.filter((c) => c.id !== action.payload);

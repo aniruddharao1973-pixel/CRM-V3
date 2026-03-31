@@ -13,6 +13,7 @@ export const sendEmailGateway = async ({
   userId,
   from,
   to,
+  bcc = [],
   subject,
   html,
   provider,
@@ -22,6 +23,7 @@ export const sendEmailGateway = async ({
   console.log("Provider:", provider);
   console.log("From:", from);
   console.log("To:", to);
+  console.log("BCC:", bcc);
   console.log("Subject:", subject);
   console.log("=====================================");
 
@@ -50,7 +52,10 @@ export const sendEmailGateway = async ({
   };
 
   // 🔥 Merge logo + uploaded files
-  const finalAttachments = [logoAttachment, ...attachments];
+  const finalAttachments =
+    attachments && attachments.length
+      ? [logoAttachment, ...attachments]
+      : [logoAttachment];
 
   console.log(
     "Logo path:",
@@ -71,6 +76,7 @@ export const sendEmailGateway = async ({
         userId,
         from,
         to,
+        bcc,
         subject,
         html,
         attachments: finalAttachments,
@@ -84,6 +90,7 @@ export const sendEmailGateway = async ({
         userId,
         from,
         to,
+        bcc,
         subject,
         html,
         attachments: finalAttachments,
@@ -96,6 +103,7 @@ export const sendEmailGateway = async ({
       userId,
       from,
       to,
+      bcc,
       subject,
       html,
       attachments: finalAttachments,

@@ -632,12 +632,12 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchAccounts, deleteAccount } from "./accountSlice";
+import { fetchAccounts, deleteAccount, restoreAccount } from "./accountSlice";
 import { useDebounce } from "../../hooks/useDebounce";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import {
   PlusIcon,
   EyeIcon,
@@ -675,11 +675,23 @@ const AccountList = () => {
   const navigate = useNavigate();
   const { accounts, pagination, loading } = useSelector((s) => s.accounts);
 
+  const { user } = useSelector((state) => state.auth);
+
+  const canDelete = user?.role === "ADMIN" || user?.role === "MANAGER";
+
   const [search, setSearch] = useState("");
+  const [lifecycle, setLifecycle] = useState("");
   const [page, setPage] = useState(1);
   const [deleting, setDeleting] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
+
   const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    id: null,
+    name: "",
+  });
+
+  const [restoreModal, setRestoreModal] = useState({
     open: false,
     id: null,
     name: "",
@@ -688,8 +700,15 @@ const AccountList = () => {
   const debouncedSearch = useDebounce(search);
 
   useEffect(() => {
-    dispatch(fetchAccounts({ page, limit: 10, search: debouncedSearch }));
-  }, [dispatch, page, debouncedSearch]);
+    dispatch(
+      fetchAccounts({
+        page,
+        limit: 10,
+        search: debouncedSearch,
+        lifecycle,
+      }),
+    );
+  }, [dispatch, page, debouncedSearch, lifecycle]);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -704,8 +723,18 @@ const AccountList = () => {
     }
   };
 
+  const handleRestore = async (id) => {
+    try {
+      await dispatch(restoreAccount(id)).unwrap();
+      toast.success("Account restored successfully");
+    } catch (err) {
+      toast.error(err || "Failed to restore");
+    }
+  };
+
   const clearFilters = () => {
     setSearch("");
+    setLifecycle("");
     setPage(1);
   };
 
@@ -755,6 +784,13 @@ const AccountList = () => {
     setShowExportDropdown(false);
   };
 
+  const LIFECYCLE_STYLES = {
+    ACTIVE: "bg-emerald-50 text-emerald-600 ring-emerald-500/20",
+    INACTIVE: "bg-yellow-50 text-yellow-700 ring-yellow-500/20",
+    PROSPECT: "bg-blue-50 text-blue-600 ring-blue-500/20",
+    DEACTIVATED: "bg-red-50 text-red-600 ring-red-500/20",
+  };
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -777,6 +813,30 @@ const AccountList = () => {
       {/* Filters Bar */}
       <div className="bg-white rounded-xl border border-gray-200 p-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-wrap gap-2 mb-3">
+            {[
+              { label: "All", value: "" },
+              { label: "Active", value: "ACTIVE" },
+              { label: "Inactive", value: "INACTIVE" },
+              { label: "Prospect", value: "PROSPECT" },
+              { label: "Deactivated", value: "DEACTIVATED" },
+            ].map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => {
+                  setLifecycle(tab.value);
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition ${
+                  lifecycle === tab.value
+                    ? "bg-indigo-600 text-white border-indigo-600"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
           {/* SEARCH */}
           <div className="relative w-full sm:flex-1 sm:min-w-0">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -917,6 +977,9 @@ const AccountList = () => {
                     <th className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider px-5 py-3.5">
                       Deals
                     </th>
+                    <th className="text-left text-xs font-semibold text-gray-600 uppercase px-5 py-3.5">
+                      Status
+                    </th>
                     <th className="text-right text-xs font-semibold text-gray-600 uppercase tracking-wider px-5 py-3.5">
                       Actions
                     </th>
@@ -1012,6 +1075,21 @@ const AccountList = () => {
                         </span>
                       </td>
 
+                      {/*status*/}
+                      <td className="px-5 py-4">
+                        {account.lifecycle ? (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ring-1 ring-inset ${
+                              LIFECYCLE_STYLES[account.lifecycle]
+                            }`}
+                          >
+                            {formatLabel(account.lifecycle)}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-300">—</span>
+                        )}
+                      </td>
+
                       {/* Actions */}
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1022,28 +1100,47 @@ const AccountList = () => {
                           >
                             <EyeIcon className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() =>
-                              navigate(`/accounts/${account.id}/edit`)
-                            }
-                            className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
-                            title="Edit"
-                          >
-                            <PencilSquareIcon className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              setDeleteModal({
-                                open: true,
-                                id: account.id,
-                                name: account.accountName,
-                              })
-                            }
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                            title="Delete"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
+                          {account.lifecycle !== "DEACTIVATED" && (
+                            <button
+                              onClick={() =>
+                                navigate(`/accounts/${account.id}/edit`)
+                              }
+                              className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                              title="Edit"
+                            >
+                              <PencilSquareIcon className="w-4 h-4" />
+                            </button>
+                          )}
+                          {canDelete && account.lifecycle !== "DEACTIVATED" && (
+                            <button
+                              onClick={() =>
+                                setDeleteModal({
+                                  open: true,
+                                  id: account.id,
+                                  name: account.accountName,
+                                })
+                              }
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                              title="Delete"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          )}
+                          {account.lifecycle === "DEACTIVATED" && canDelete && (
+                            <button
+                              onClick={() =>
+                                setRestoreModal({
+                                  open: true,
+                                  id: account.id,
+                                  name: account.accountName,
+                                })
+                              }
+                              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                              title="Restore"
+                            >
+                              ♻️
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1060,7 +1157,8 @@ const AccountList = () => {
                   className="p-4 hover:bg-gray-50/50 transition-colors"
                 >
                   {/* Header Row */}
-                  <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    {/* LEFT */}
                     <div className="min-w-0 flex-1">
                       <Link
                         to={`/accounts/${account.id}`}
@@ -1068,20 +1166,30 @@ const AccountList = () => {
                       >
                         {account.accountName}
                       </Link>
-                      {account.accountNumber && (
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          #{account.accountNumber}
-                        </p>
+
+                      {/* 👇 MOVE RATING HERE */}
+                      {account.rating && (
+                        <div className="mt-1">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full ring-1 ring-inset ${
+                              RATING_STYLES[account.rating] ||
+                              "bg-gray-50 text-gray-600 ring-gray-500/20"
+                            }`}
+                          >
+                            {formatLabel(account.rating)}
+                          </span>
+                        </div>
                       )}
                     </div>
-                    {account.rating && (
+
+                    {/* RIGHT → STATUS ONLY */}
+                    {account.lifecycle && (
                       <span
-                        className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset ${
-                          RATING_STYLES[account.rating] ||
-                          "bg-gray-50 text-gray-600 ring-gray-500/20"
+                        className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full ring-1 ring-inset ${
+                          LIFECYCLE_STYLES[account.lifecycle]
                         }`}
                       >
-                        {formatLabel(account.rating)}
+                        {formatLabel(account.lifecycle)}
                       </span>
                     )}
                   </div>
@@ -1130,24 +1238,44 @@ const AccountList = () => {
                       >
                         <EyeIcon className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => navigate(`/accounts/${account.id}/edit`)}
-                        className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
-                      >
-                        <PencilSquareIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() =>
-                          setDeleteModal({
-                            open: true,
-                            id: account.id,
-                            name: account.accountName,
-                          })
-                        }
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
+                      {account.lifecycle !== "DEACTIVATED" && (
+                        <button
+                          onClick={() =>
+                            navigate(`/accounts/${account.id}/edit`)
+                          }
+                          className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                        >
+                          <PencilSquareIcon className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDelete && account.lifecycle !== "DEACTIVATED" && (
+                        <button
+                          onClick={() =>
+                            setDeleteModal({
+                              open: true,
+                              id: account.id,
+                              name: account.accountName,
+                            })
+                          }
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      )}
+                      {account.lifecycle === "DEACTIVATED" && canDelete && (
+                        <button
+                          onClick={() =>
+                            setRestoreModal({
+                              open: true,
+                              id: account.id,
+                              name: account.accountName,
+                            })
+                          }
+                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                        >
+                          ♻️
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1238,15 +1366,22 @@ const AccountList = () => {
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
                 <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
               </div>
+
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Delete Account
+                Deactivate Account
               </h3>
-              <p className="text-sm text-gray-500 mb-6">
-                Are you sure you want to delete{" "}
-                <span className="font-medium text-gray-700">
-                  "{deleteModal.name}"
-                </span>
-                ? This will remove all associated contacts and deals.
+
+              <p className="text-sm text-gray-500 mb-2">
+                You are about to deactivate this account:
+              </p>
+
+              <p className="text-sm font-medium text-gray-800 mb-4">
+                "{deleteModal.name}"
+              </p>
+
+              <p className="text-xs text-gray-400 mb-6">
+                This action will hide the account from active views. You can
+                restore it later if needed.
               </p>
             </div>
 
@@ -1260,6 +1395,7 @@ const AccountList = () => {
               >
                 Cancel
               </button>
+
               <button
                 onClick={handleDelete}
                 disabled={deleting}
@@ -1268,11 +1404,71 @@ const AccountList = () => {
                 {deleting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                    Deleting...
+                    Deactivating...
                   </>
                 ) : (
-                  "Delete"
+                  "Deactivate"
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Restore Modal */}
+      {restoreModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
+            onClick={() => setRestoreModal({ open: false, id: null, name: "" })}
+          />
+
+          <div className="relative bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                ♻️
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Restore Account
+              </h3>
+
+              <p className="text-sm text-gray-500 mb-2">
+                You are about to restore this account:
+              </p>
+
+              <p className="text-sm font-medium text-gray-800 mb-4">
+                "{restoreModal.name}"
+              </p>
+
+              <p className="text-xs text-gray-400 mb-6">
+                This will make the account active again and available for
+                editing and operations.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() =>
+                  setRestoreModal({ open: false, id: null, name: "" })
+                }
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    await dispatch(restoreAccount(restoreModal.id)).unwrap();
+                    toast.success("Account restored successfully");
+                    setRestoreModal({ open: false, id: null, name: "" });
+                  } catch (err) {
+                    toast.error(err || "Failed to restore");
+                  }
+                }}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+              >
+                Restore
               </button>
             </div>
           </div>

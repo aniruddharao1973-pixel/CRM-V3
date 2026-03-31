@@ -151,9 +151,11 @@ export const fetchDeals = createAsyncThunk(
       const { data } = await API.get("/deals", { params });
       return data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch deals");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch deals",
+      );
     }
-  }
+  },
 );
 
 /* ================= FETCH ONE ================= */
@@ -164,9 +166,11 @@ export const fetchDeal = createAsyncThunk(
       const { data } = await API.get(`/deals/${id}`);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch deal");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch deal",
+      );
     }
-  }
+  },
 );
 
 /* ================= CREATE ================= */
@@ -177,9 +181,11 @@ export const createDeal = createAsyncThunk(
       const { data } = await API.post("/deals", dealData);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to create deal");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to create deal",
+      );
     }
-  }
+  },
 );
 
 /* ================= UPDATE ================= */
@@ -190,23 +196,25 @@ export const updateDeal = createAsyncThunk(
       const { data } = await API.put(`/deals/${id}`, dealData);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to update deal");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to update deal",
+      );
     }
-  }
+  },
 );
 
 /* ⭐ QUICK STAGE UPDATE (for progress bar click) */
-export const updateDealStage = createAsyncThunk(
-  "deals/updateStage",
-  async ({ id, stage }, { rejectWithValue }) => {
-    try {
-      const { data } = await API.put(`/deals/${id}`, { stage });
-      return data.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to update stage");
-    }
-  }
-);
+// export const updateDealStage = createAsyncThunk(
+//   "deals/updateStage",
+//   async ({ id, stage }, { rejectWithValue }) => {
+//     try {
+//       const { data } = await API.put(`/deals/${id}`, { stage });
+//       return data.data;
+//     } catch (err) {
+//       return rejectWithValue(err.response?.data?.message || "Failed to update stage");
+//     }
+//   }
+// );
 
 /* ================= DELETE ================= */
 export const deleteDeal = createAsyncThunk(
@@ -216,9 +224,11 @@ export const deleteDeal = createAsyncThunk(
       await API.delete(`/deals/${id}`);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to delete deal");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to delete deal",
+      );
     }
-  }
+  },
 );
 
 /* ================= PIPELINE ================= */
@@ -231,7 +241,7 @@ export const fetchPipelineStats = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
     }
-  }
+  },
 );
 
 /* ======================================================= */
@@ -323,9 +333,9 @@ const dealSlice = createSlice({
       })
 
       /* ⭐ STAGE QUICK UPDATE */
-      .addCase(updateDealStage.fulfilled, (state, action) => {
-        state.deal = action.payload;
-      })
+      // .addCase(updateDealStage.fulfilled, (state, action) => {
+      //   state.deal = action.payload;
+      // })
 
       /* ================= DELETE ================= */
       .addCase(deleteDeal.fulfilled, (state, action) => {

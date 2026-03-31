@@ -6,9 +6,10 @@ import {
   createDeal,
   updateDeal,
   deleteDeal,
+  updateStageHistoryNote,
   // getPipelineStats,
 } from "../controllers/deal.controller.js";
-import { protect } from "../middlewares/auth.middleware.js";
+import { protect, authorize } from "../middlewares/auth.middleware.js";
 import { validateDeal } from "../middlewares/validate.middleware.js";
 
 const router = Router();
@@ -21,6 +22,7 @@ router
   .route("/:id")
   .get(getDeal)
   .put(validateDeal, updateDeal)
-  .delete(deleteDeal);
+  .delete(authorize("ADMIN", "MANAGER"), deleteDeal);
+router.put("/stage-history/:id", updateStageHistoryNote);
 
 export default router;
